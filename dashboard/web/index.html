@@ -4,104 +4,302 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Lab 05 - REST vs GraphQL</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@6/dist/echarts.min.js"></script>
   <style>
     :root {
       color-scheme: light;
-      --ink: #172026;
-      --muted: #61717b;
-      --line: #d8e0e4;
-      --rest: #2563eb;
-      --graphql: #c026d3;
-      --surface: #f7f9fa;
-      --good: #147d64;
-      --warn: #b45309;
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #18212f;
+      --muted: #66768a;
+      --line: #d8e1ea;
+      --soft: #eef3f7;
+      --rest: #0f766e;
+      --graphql: #e11d48;
+      --good: #059669;
+      --bad: #d97706;
+      --accent: #0891b2;
+      --shadow: 0 16px 34px rgba(24, 33, 47, 0.08);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
+      background:
+        linear-gradient(135deg, rgba(8, 145, 178, 0.12), transparent 32%),
+        radial-gradient(circle at 88% 0%, rgba(225, 29, 72, 0.10), transparent 28%),
+        var(--bg);
       color: var(--ink);
-      background: white;
+      font-family: Arial, Helvetica, sans-serif;
     }
     main {
-      width: min(1280px, 100vw);
-      aspect-ratio: 16 / 9;
-      min-height: 720px;
+      width: min(1440px, 100vw);
+      min-height: 100vh;
       margin: 0 auto;
-      padding: 24px;
+      padding: 16px 20px 20px;
       display: grid;
-      grid-template-rows: auto auto 1fr;
-      gap: 16px;
+      grid-template-rows: auto auto auto 1fr;
+      gap: 12px;
     }
     header {
       display: flex;
-      align-items: end;
       justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      padding-bottom: 10px;
       border-bottom: 1px solid var(--line);
-      padding-bottom: 12px;
     }
-    h1 { margin: 0; font-size: 26px; letter-spacing: 0; }
-    .status { color: var(--muted); font-size: 14px; }
-    .tabs { display: flex; gap: 8px; }
-    .tabs button {
-      border: 1px solid var(--line);
-      background: white;
-      color: var(--ink);
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 700;
+    h1 {
+      margin: 0;
+      font-size: 25px;
+      letter-spacing: 0;
     }
-    .tabs button.active {
-      background: var(--ink);
-      color: white;
-      border-color: var(--ink);
+    .status {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
     }
-    .panel {
-      display: none;
-      grid-template-columns: repeat(12, 1fr);
-      grid-template-rows: auto 1fr;
-      gap: 16px;
-      min-height: 0;
-    }
-    .panel.active { display: grid; }
-    .metric {
+    .tabs {
+      display: flex;
+      gap: 6px;
+      padding: 4px;
+      background: #e8eef3;
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 14px;
-      background: var(--surface);
-      min-height: 96px;
     }
-    .metric h2 {
-      margin: 0 0 10px;
-      font-size: 13px;
+    button, select, input {
+      font: inherit;
+    }
+    .tabs button, .segmented button, .chip {
+      border: 0;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .tabs button {
+      min-width: 82px;
+      padding: 8px 10px;
+      background: transparent;
       color: var(--muted);
+      font-size: 13px;
+    }
+    .tabs button.active {
+      background: var(--panel);
+      color: var(--ink);
+      box-shadow: 0 1px 4px rgba(23, 33, 43, 0.16);
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: auto auto auto auto 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    .control {
+      display: grid;
+      gap: 4px;
+    }
+    .control label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0;
     }
-    .metric .value { font-size: 26px; font-weight: 800; }
-    .metric .sub { margin-top: 6px; color: var(--muted); font-size: 13px; }
-    .wide { grid-column: span 6; }
-    .third { grid-column: span 4; }
-    .full { grid-column: 1 / -1; }
-    .chart, .table-wrap, .conclusion {
+    .segmented {
+      display: flex;
+      gap: 4px;
+      padding: 3px;
+      background: var(--soft);
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 14px;
+    }
+    .segmented button {
+      min-width: 82px;
+      padding: 7px 9px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .segmented button.active {
+      background: #18212f;
+      color: white;
+    }
+    select {
+      height: 34px;
+      padding: 0 30px 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: white;
+      color: var(--ink);
+      font-weight: 700;
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 34px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      background: white;
+    }
+    .alpha {
+      min-width: 180px;
+    }
+    .alpha input {
+      width: 140px;
+      accent-color: var(--accent);
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+    .chip {
+      padding: 7px 9px;
+      background: var(--soft);
+      color: var(--muted);
+      border: 1px solid var(--line);
+      font-size: 12px;
+    }
+    .chip.active {
+      background: #dcf7f4;
+      color: #0f766e;
+      border-color: #8bd8cf;
+    }
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: -1px;
+    }
+    .panel {
+      display: none;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 12px;
       min-height: 0;
+    }
+    .panel.active { display: grid; }
+    .kpi, .card, .summary {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    .kpi {
+      grid-column: span 3;
+      min-height: 84px;
+      padding: 11px 12px;
+      border-top: 4px solid var(--ink);
+    }
+    .kpi.good { border-top-color: var(--good); }
+    .kpi.bad { border-top-color: var(--bad); }
+    .kpi h2, .card h2, .summary h2 {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .kpi .value {
+      margin-top: 8px;
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 900;
+    }
+    .kpi .sub {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card {
+      grid-column: span 6;
+      min-height: 248px;
+      padding: 12px;
       overflow: hidden;
     }
-    .chart h2, .table-wrap h2, .conclusion h2 {
-      margin: 0 0 10px;
-      font-size: 16px;
+    .card.third { grid-column: span 4; }
+    .card.full { grid-column: 1 / -1; }
+    .card.table-card { overflow: auto; }
+    .chart {
+      width: 100%;
+      height: 222px;
     }
-    svg { width: 100%; height: 285px; display: block; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: left; }
-    th { background: var(--surface); }
-    .positive { color: var(--good); font-weight: 800; }
-    .negative { color: var(--warn); font-weight: 800; }
-    .conclusion p { margin: 0; line-height: 1.45; color: var(--muted); }
+    .chart.tall { height: 330px; }
+    .chart.short { height: 218px; }
+    .summary {
+      grid-column: 1 / -1;
+      min-height: 82px;
+      padding: 13px 14px;
+      border-left: 5px solid var(--ink);
+      display: grid;
+      align-content: center;
+    }
+    .summary.good { border-left-color: var(--good); }
+    .summary.bad { border-left-color: var(--bad); }
+    .summary p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.42;
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+    .table th, .table td {
+      padding: 7px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      white-space: nowrap;
+    }
+    .table th {
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+    .good-text { color: var(--good); font-weight: 900; }
+    .bad-text { color: var(--bad); font-weight: 900; }
+    .library-warning {
+      display: none;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-weight: 800;
+    }
+    @media (max-width: 520px) {
+      main { min-height: auto; }
+      header { align-items: start; flex-direction: column; }
+      .controls { grid-template-columns: 1fr 1fr; }
+      .chips { justify-content: start; grid-column: 1 / -1; }
+      .kpi, .card, .card.third { grid-column: 1 / -1; }
+    }
   </style>
 </head>
 <body>
@@ -111,39 +309,127 @@
         <h1>Lab 05 - REST vs GraphQL</h1>
         <div class="status" id="status">Carregando resultados...</div>
       </div>
-      <nav class="tabs">
-        <button data-tab="overview" class="active">Visao Geral</button>
-        <button data-tab="rq1">RQ1 Tempo</button>
-        <button data-tab="rq2">RQ2 Tamanho</button>
+      <nav class="tabs" aria-label="Dashboard sections">
+        <button class="active" data-tab="overview">Visao Geral</button>
+        <button data-tab="rq">RQ Explorer</button>
+        <button data-tab="distribution">Distribuicao</button>
         <button data-tab="stats">Estatistica</button>
       </nav>
     </header>
 
+    <div class="library-warning" id="library-warning">
+      Nao foi possivel carregar Apache ECharts pelo CDN. Verifique a conexao ou use uma rede que permita cdn.jsdelivr.net.
+    </div>
+
+    <section class="controls" aria-label="Filtros do dashboard">
+      <div class="control">
+        <label>Metrica</label>
+        <div class="segmented" id="metric-control">
+          <button class="active" data-metric="response_time_ms">Tempo</button>
+          <button data-metric="response_size_bytes">Tamanho</button>
+        </div>
+      </div>
+      <div class="control">
+        <label>Resumo</label>
+        <select id="summary-field">
+          <option value="median">Mediana</option>
+          <option value="mean">Media</option>
+          <option value="p95">P95</option>
+          <option value="iqr">IQR</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Ordenar</label>
+        <select id="sort-by">
+          <option value="impact">Impacto</option>
+          <option value="pvalue">p Holm</option>
+          <option value="scenario">Cenario</option>
+        </select>
+      </div>
+      <div class="control alpha">
+        <label>Alpha: <span id="alpha-value">0,05</span></label>
+        <input id="alpha-control" type="range" min="0.01" max="0.10" step="0.01" value="0.05">
+      </div>
+      <label class="toggle">
+        <input id="significant-only" type="checkbox">
+        Somente significativos
+      </label>
+      <div class="chips" id="scenario-chips"></div>
+    </section>
+
+    <div class="legend">
+      <span><span class="dot" style="background: var(--rest)"></span>REST</span>
+      <span><span class="dot" style="background: var(--graphql)"></span>GraphQL</span>
+    </div>
+
     <section id="overview" class="panel active"></section>
-    <section id="rq1" class="panel"></section>
-    <section id="rq2" class="panel"></section>
+    <section id="rq" class="panel"></section>
+    <section id="distribution" class="panel"></section>
     <section id="stats" class="panel"></section>
   </main>
 
   <script>
-    const tabs = document.querySelectorAll(".tabs button");
-    tabs.forEach(button => button.addEventListener("click", () => {
-      tabs.forEach(item => item.classList.remove("active"));
-      document.querySelectorAll(".panel").forEach(item => item.classList.remove("active"));
-      button.classList.add("active");
-      document.getElementById(button.dataset.tab).classList.add("active");
-    }));
+    const COLORS = {
+      rest: "#0f766e",
+      graphql: "#e11d48",
+      good: "#059669",
+      bad: "#d97706",
+      accent: "#0891b2",
+      ink: "#18212f",
+      muted: "#66768a",
+      line: "#d8e1ea",
+      soft: "#eef3f7"
+    };
+    const METRICS = ["response_time_ms", "response_size_bytes"];
+    const METRIC_LABELS = {
+      response_time_ms: "Tempo de resposta",
+      response_size_bytes: "Tamanho da resposta"
+    };
+    const METRIC_SHORT = {
+      response_time_ms: "Tempo",
+      response_size_bytes: "Tamanho"
+    };
+    const METRIC_UNITS = {
+      response_time_ms: " ms",
+      response_size_bytes: " bytes"
+    };
+    const FIELD_LABELS = {
+      median: "mediana",
+      mean: "media",
+      p95: "P95",
+      iqr: "IQR"
+    };
+
+    const state = {
+      activeTab: "overview",
+      metric: "response_time_ms",
+      summaryField: "median",
+      sortBy: "impact",
+      alpha: 0.05,
+      significantOnly: false,
+      selectedScenarios: new Set()
+    };
+    const charts = new Map();
+    let rawRows = [];
+    let processedRows = [];
+    let statRowsAll = [];
+    let allScenarios = [];
 
     function parseCsv(text) {
       const lines = text.trim().split(/\r?\n/);
       const headers = lines.shift().split(",");
-      return lines.map(line => {
+      return lines.filter(Boolean).map(line => {
         const values = [];
         let current = "";
         let quoted = false;
-        for (const char of line) {
-          if (char === '"') quoted = !quoted;
-          else if (char === "," && !quoted) {
+        for (let index = 0; index < line.length; index += 1) {
+          const char = line[index];
+          if (char === '"' && line[index + 1] === '"') {
+            current += '"';
+            index += 1;
+          } else if (char === '"') {
+            quoted = !quoted;
+          } else if (char === "," && !quoted) {
             values.push(current);
             current = "";
           } else {
@@ -155,123 +441,820 @@
       });
     }
 
-    function number(value) {
+    function num(value) {
       const parsed = Number(value);
       return Number.isFinite(parsed) ? parsed : 0;
     }
 
-    function fmt(value, suffix = "") {
-      return `${number(value).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}${suffix}`;
+    function fmt(value, suffix = "", digits = 2) {
+      return `${num(value).toLocaleString("pt-BR", { maximumFractionDigits: digits })}${suffix}`;
     }
 
-    function metric(title, value, sub) {
-      return `<article class="metric third"><h2>${title}</h2><div class="value">${value}</div><div class="sub">${sub}</div></article>`;
+    function axisFmt(value, metric = state.metric) {
+      const numeric = num(value);
+      if (metric === "response_size_bytes") {
+        if (Math.abs(numeric) >= 1000) return `${fmt(numeric / 1000, " kB", 1)}`;
+        return `${fmt(numeric, " B", 0)}`;
+      }
+      return `${fmt(numeric, " ms", 0)}`;
     }
 
-    function groupedMedian(rows, metricName, treatment) {
-      const values = rows.filter(row => row.metric === metricName && row.treatment === treatment).map(row => number(row.median));
-      values.sort((a, b) => a - b);
-      if (!values.length) return 0;
-      const middle = Math.floor(values.length / 2);
-      return values.length % 2 ? values[middle] : (values[middle - 1] + values[middle]) / 2;
+    function labelScenario(name) {
+      return String(name).replaceAll("_", " ");
     }
 
-    function barChart(rows, metricName, title) {
-      const data = rows.filter(row => row.metric === metricName);
-      const scenarios = [...new Set(data.map(row => row.scenario))];
-      const max = Math.max(...data.map(row => number(row.median)), 1);
-      const width = 680;
-      const height = 285;
-      const group = width / scenarios.length;
-      const bars = [];
-      scenarios.forEach((scenario, index) => {
-        ["REST", "GRAPHQL"].forEach((treatment, offset) => {
-          const row = data.find(item => item.scenario === scenario && item.treatment === treatment);
-          const value = number(row?.median);
-          const barHeight = (value / max) * 210;
-          const x = index * group + 36 + offset * 26;
-          const y = 235 - barHeight;
-          const color = treatment === "REST" ? "var(--rest)" : "var(--graphql)";
-          bars.push(`<rect x="${x}" y="${y}" width="22" height="${barHeight}" fill="${color}"><title>${scenario} ${treatment}: ${fmt(value)}</title></rect>`);
-        });
-        bars.push(`<text x="${index * group + group / 2}" y="268" text-anchor="middle" font-size="10">${scenario.replace("_", " ")}</text>`);
+    function unique(values) {
+      return [...new Set(values)];
+    }
+
+    function median(values) {
+      const sorted = values.map(num).sort((a, b) => a - b);
+      if (!sorted.length) return 0;
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+
+    function quantile(values, q) {
+      const sorted = values.map(num).sort((a, b) => a - b);
+      if (!sorted.length) return 0;
+      const position = (sorted.length - 1) * q;
+      const base = Math.floor(position);
+      const rest = position - base;
+      return sorted[base + 1] === undefined ? sorted[base] : sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+    }
+
+    function groupBy(items, keyFn) {
+      const grouped = new Map();
+      items.forEach(item => {
+        const key = keyFn(item);
+        if (!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key).push(item);
       });
-      return `<article class="chart wide"><h2>${title}</h2><svg viewBox="0 0 ${width} ${height}" role="img">${bars.join("")}<line x1="24" y1="235" x2="${width - 8}" y2="235" stroke="#9aa8af"/></svg></article>`;
+      return grouped;
     }
 
-    function conclusion(rows, metricName, label) {
-      const stats = rows.filter(row => row.metric === metricName);
-      const favorable = stats.filter(row => number(row.percent_difference_rest_minus_graphql) > 0).length;
-      const significant = stats.filter(row => row.significant === "True" || row.significant === "true").length;
-      const total = stats.length || 1;
-      const cls = favorable >= Math.ceil(total / 2) ? "positive" : "negative";
-      return `<article class="conclusion full"><h2>Conclusao</h2><p><span class="${cls}">${favorable} de ${total}</span> cenarios favorecem GraphQL em ${label}. ${significant} cenarios possuem diferenca significativa apos correcao de Holm.</p></article>`;
+    function selectedScenarios() {
+      return allScenarios.filter(scenario => state.selectedScenarios.has(scenario));
     }
 
-    function statsTable(rows, metricName = null) {
-      const filtered = metricName ? rows.filter(row => row.metric === metricName) : rows;
-      const body = filtered.map(row => `<tr>
-        <td>${row.scenario}</td>
-        <td>${row.metric.replace("response_", "").replace("_", " ")}</td>
-        <td>${row.test}</td>
-        <td>${fmt(row.holm_p_value)}</td>
-        <td>${fmt(row.effect_size)}</td>
-        <td>${fmt(row.percent_difference_rest_minus_graphql, "%")}</td>
-        <td>${row.significant}</td>
-      </tr>`).join("");
-      return `<article class="table-wrap full"><h2>Resultados Estatisticos</h2><table><thead><tr><th>Cenario</th><th>Metrica</th><th>Teste</th><th>p Holm</th><th>Efeito</th><th>Dif. %</th><th>Signif.</th></tr></thead><tbody>${body}</tbody></table></article>`;
+    function statRows(metric = state.metric) {
+      let rows = statRowsAll.filter(row => row.metric === metric && state.selectedScenarios.has(row.scenario));
+      if (state.significantOnly) {
+        rows = rows.filter(row => num(row.holm_p_value) <= state.alpha);
+      }
+      if (state.sortBy === "impact") {
+        rows.sort((a, b) => Math.abs(num(b.percent_difference_rest_minus_graphql)) - Math.abs(num(a.percent_difference_rest_minus_graphql)));
+      } else if (state.sortBy === "pvalue") {
+        rows.sort((a, b) => num(a.holm_p_value) - num(b.holm_p_value));
+      } else {
+        rows.sort((a, b) => a.scenario.localeCompare(b.scenario));
+      }
+      return rows;
+    }
+
+    function processedValue(scenario, treatment, metric = state.metric, field = state.summaryField) {
+      const row = processedRows.find(item => item.scenario === scenario && item.treatment === treatment && item.metric === metric);
+      return num(row?.[field]);
+    }
+
+    function improvement(row) {
+      return num(row.percent_difference_rest_minus_graphql);
+    }
+
+    function isSignificant(row) {
+      return num(row.holm_p_value) <= state.alpha;
+    }
+
+    function diffColor(value) {
+      const magnitude = Math.min(0.92, 0.22 + Math.abs(value) / 105);
+      return value >= 0
+        ? `rgba(15, 138, 112, ${magnitude})`
+        : `rgba(180, 83, 9, ${magnitude})`;
+    }
+
+    function activeProcessed(metric = state.metric) {
+      return processedRows.filter(row => row.metric === metric && state.selectedScenarios.has(row.scenario));
+    }
+
+    function activeRaw(metric = state.metric) {
+      return rawRows.filter(row => state.selectedScenarios.has(row.scenario) && row.success === "true" && num(row[metric]) > 0);
+    }
+
+    function kpi(title, value, sub, tone = "") {
+      return `<article class="kpi ${tone}"><h2>${title}</h2><div class="value">${value}</div><div class="sub">${sub}</div></article>`;
+    }
+
+    function summary(text, tone = "good") {
+      return `<article class="summary ${tone}"><h2>Conclusao automatica</h2><p>${text}</p></article>`;
+    }
+
+    function card(id, title, className = "") {
+      return `<article class="card ${className}"><h2>${title}</h2><div id="${id}" class="chart"></div></article>`;
+    }
+
+    function tableCard(rows, className = "full") {
+      const body = rows.map(row => {
+        const diff = improvement(row);
+        const tone = diff >= 0 ? "good-text" : "bad-text";
+        return `<tr>
+          <td>${labelScenario(row.scenario)}</td>
+          <td>${METRIC_SHORT[row.metric]}</td>
+          <td>${row.test}</td>
+          <td>${fmt(row.holm_p_value, "", 4)}</td>
+          <td>${fmt(row.effect_size, "", 2)}</td>
+          <td class="${tone}">${fmt(diff, "%", 1)}</td>
+          <td>${isSignificant(row) ? "Sim" : "Nao"}</td>
+        </tr>`;
+      }).join("");
+      return `<article class="card table-card ${className}"><h2>Testes pareados filtrados</h2><table class="table">
+        <thead><tr><th>Cenario</th><th>Metrica</th><th>Teste</th><th>p Holm</th><th>Efeito</th><th>Dif. %</th><th>Sig.</th></tr></thead>
+        <tbody>${body || '<tr><td colspan="7">Nenhum resultado com os filtros atuais.</td></tr>'}</tbody>
+      </table></article>`;
+    }
+
+    function baseChartOptions() {
+      return {
+        animationDuration: 450,
+        color: [COLORS.rest, COLORS.graphql, COLORS.good, COLORS.bad],
+        textStyle: { fontFamily: "Arial, Helvetica, sans-serif", color: COLORS.ink },
+        grid: { left: 54, right: 24, top: 36, bottom: 46, containLabel: true },
+        tooltip: {
+          trigger: "item",
+          backgroundColor: "rgba(23, 33, 43, 0.94)",
+          borderWidth: 0,
+          textStyle: { color: "#fff" }
+        }
+      };
+    }
+
+    function renderChart(id, option) {
+      const node = document.getElementById(id);
+      if (!node || !window.echarts) return;
+      const chart = charts.get(id) || echarts.init(node, null, { renderer: "canvas" });
+      charts.set(id, chart);
+      chart.setOption(option, true);
+    }
+
+    function buildScenarioChips() {
+      const target = document.getElementById("scenario-chips");
+      target.innerHTML = allScenarios.map(scenario => {
+        const active = state.selectedScenarios.has(scenario) ? "active" : "";
+        return `<button class="chip ${active}" data-scenario="${scenario}">${labelScenario(scenario)}</button>`;
+      }).join("");
+      target.querySelectorAll(".chip").forEach(button => {
+        button.addEventListener("click", () => {
+          const scenario = button.dataset.scenario;
+          if (state.selectedScenarios.has(scenario) && state.selectedScenarios.size > 1) {
+            state.selectedScenarios.delete(scenario);
+          } else {
+            state.selectedScenarios.add(scenario);
+          }
+          render();
+        });
+      });
+    }
+
+    function renderKpis(containerRows = statRows(state.metric)) {
+      const rest = median(activeProcessed(state.metric).filter(row => row.treatment === "REST").map(row => row[state.summaryField]));
+      const gql = median(activeProcessed(state.metric).filter(row => row.treatment === "GRAPHQL").map(row => row[state.summaryField]));
+      const delta = rest - gql;
+      const pct = rest ? (delta / rest) * 100 : 0;
+      const sig = containerRows.filter(isSignificant).length;
+      const favorable = containerRows.filter(row => improvement(row) > 0).length;
+      return [
+        kpi(`${FIELD_LABELS[state.summaryField]} REST`, fmt(rest, METRIC_UNITS[state.metric]), "Agregado dos cenarios filtrados"),
+        kpi(`${FIELD_LABELS[state.summaryField]} GraphQL`, fmt(gql, METRIC_UNITS[state.metric]), "Agregado dos cenarios filtrados"),
+        kpi("Ganho GraphQL", fmt(pct, "%"), `${fmt(delta, METRIC_UNITS[state.metric])} REST - GraphQL`, pct >= 0 ? "good" : "bad"),
+        kpi("Cenarios favoraveis", `${favorable}/${containerRows.length}`, `${sig} significativos em alpha ${fmt(state.alpha, "", 2)}`, sig ? "good" : "")
+      ].join("");
+    }
+
+    function impactRankingOption(metric = state.metric) {
+      const rows = statRows(metric);
+      const scenarios = rows.map(row => labelScenario(row.scenario));
+      const values = rows.map(improvement);
+      return {
+        ...baseChartOptions(),
+        grid: { left: 112, right: 42, top: 28, bottom: 28 },
+        xAxis: {
+          type: "value",
+          axisLabel: { formatter: "{value}%" },
+          splitLine: { lineStyle: { color: COLORS.soft } }
+        },
+        yAxis: {
+          type: "category",
+          data: scenarios,
+          axisLabel: { color: COLORS.muted }
+        },
+        tooltip: {
+          trigger: "axis",
+          formatter: params => {
+            const point = params[0];
+            const row = rows[point.dataIndex];
+            return `${labelScenario(row.scenario)}<br>${METRIC_LABELS[metric]}: <b>${fmt(point.value, "%")}</b><br>p Holm: ${fmt(row.holm_p_value, "", 4)}`;
+          }
+        },
+        series: [{
+          type: "bar",
+          data: values.map(value => ({
+            value,
+            itemStyle: { color: value >= 0 ? COLORS.good : COLORS.bad, borderRadius: [0, 5, 5, 0] }
+          })),
+          markLine: { symbol: "none", data: [{ xAxis: 0 }], lineStyle: { color: COLORS.line } },
+          label: { show: true, position: "right", formatter: p => fmt(p.value, "%", 1), color: COLORS.ink, fontWeight: 800 }
+        }]
+      };
+    }
+
+    function payoffOption() {
+      const timeRows = statRows("response_time_ms");
+      const sizeRows = statRows("response_size_bytes");
+      const scenarios = selectedScenarios().filter(scenario => {
+        const time = timeRows.find(row => row.scenario === scenario);
+        const size = sizeRows.find(row => row.scenario === scenario);
+        return time && size;
+      });
+      const data = scenarios.map(scenario => {
+        const time = timeRows.find(row => row.scenario === scenario);
+        const size = sizeRows.find(row => row.scenario === scenario);
+        return {
+          name: labelScenario(scenario),
+          value: [improvement(size), improvement(time), Math.max(Math.abs(improvement(size)), Math.abs(improvement(time)))],
+          significant: isSignificant(time) || isSignificant(size)
+        };
+      });
+      return {
+        ...baseChartOptions(),
+        grid: { left: 58, right: 38, top: 34, bottom: 54 },
+        xAxis: {
+          name: "Ganho em tamanho (%)",
+          nameLocation: "middle",
+          nameGap: 30,
+          type: "value",
+          axisLabel: { formatter: "{value}%" },
+          splitLine: { lineStyle: { color: COLORS.soft } }
+        },
+        yAxis: {
+          name: "Ganho em tempo (%)",
+          nameGap: 32,
+          type: "value",
+          axisLabel: { formatter: "{value}%" },
+          splitLine: { lineStyle: { color: COLORS.soft } }
+        },
+        tooltip: {
+          trigger: "item",
+          formatter: p => `${p.name}<br>Tamanho: <b>${fmt(p.value[0], "%")}</b><br>Tempo: <b>${fmt(p.value[1], "%")}</b><br>${p.data.significant ? "Significativo em alguma metrica" : "Nao significativo"}`
+        },
+        graphic: [
+          { type: "text", right: 46, top: 34, style: { text: "GraphQL vence em ambos", fill: COLORS.good, font: "700 10px Arial" } },
+          { type: "text", left: 76, top: 34, style: { text: "Troca desfavoravel", fill: COLORS.bad, font: "700 10px Arial" } },
+          { type: "text", right: 38, bottom: 62, style: { text: "Menor payload, tempo pior", fill: COLORS.muted, font: "700 10px Arial" } }
+        ],
+        series: [{
+          type: "scatter",
+          symbolSize: value => 12 + Math.min(22, Math.abs(value[2]) / 3),
+          data,
+          itemStyle: {
+            color: p => (p.value[0] >= 0 && p.value[1] >= 0 ? COLORS.good : COLORS.bad),
+            opacity: 0.88,
+            borderColor: "#fff",
+            borderWidth: 2
+          },
+          label: { show: false },
+          emphasis: {
+            label: { show: true, formatter: "{b}", position: "right", color: COLORS.ink, fontSize: 11, fontWeight: 800 }
+          },
+          markLine: {
+            symbol: "none",
+            data: [{ xAxis: 0 }, { yAxis: 0 }],
+            lineStyle: { color: COLORS.line, type: "dashed" }
+          }
+        }]
+      };
+    }
+
+    function outcomeStripOption() {
+      const rows = statRows(state.metric);
+      const scenarios = rows.map(row => labelScenario(row.scenario));
+      const restValues = rows.map(row => processedValue(row.scenario, "REST"));
+      const gqlValues = rows.map(row => processedValue(row.scenario, "GRAPHQL"));
+      const maxValue = Math.max(...restValues, ...gqlValues, 1);
+      return {
+        ...baseChartOptions(),
+        grid: { left: 104, right: 48, top: 36, bottom: 38 },
+        legend: { top: 0, right: 0, itemWidth: 10, itemHeight: 10, data: ["REST", "GraphQL"] },
+        xAxis: {
+          type: "value",
+          max: maxValue * 1.18,
+          axisLabel: { formatter: value => axisFmt(value, state.metric) },
+          splitLine: { lineStyle: { color: COLORS.soft } }
+        },
+        yAxis: {
+          type: "category",
+          data: scenarios,
+          axisLabel: { color: COLORS.muted }
+        },
+        tooltip: {
+          trigger: "axis",
+          axisPointer: { type: "shadow" },
+          formatter: params => {
+            const index = params[0].dataIndex;
+            const row = rows[index];
+            return `${labelScenario(row.scenario)}<br>REST: <b>${axisFmt(restValues[index])}</b><br>GraphQL: <b>${axisFmt(gqlValues[index])}</b><br>Ganho: <b>${fmt(improvement(row), "%")}</b><br>p Holm: ${fmt(row.holm_p_value, "", 4)}`;
+          }
+        },
+        series: [
+          {
+            name: "REST",
+            type: "bar",
+            data: restValues,
+            barWidth: 9,
+            itemStyle: { color: COLORS.rest, borderRadius: [0, 4, 4, 0] }
+          },
+          {
+            name: "GraphQL",
+            type: "bar",
+            data: gqlValues,
+            barWidth: 9,
+            itemStyle: { color: COLORS.graphql, borderRadius: [0, 4, 4, 0] }
+          },
+          {
+            name: "Ganho",
+            type: "scatter",
+            symbolSize: value => Math.max(9, Math.min(22, Math.abs(value[0]) / 4 + 9)),
+            data: rows.map((row, index) => ({
+              value: [maxValue * 1.08, index, improvement(row)],
+              itemStyle: { color: improvement(row) >= 0 ? COLORS.good : COLORS.bad, borderColor: "#fff", borderWidth: 2 }
+            })),
+            encode: { x: 0, y: 1 },
+            tooltip: { show: false },
+            label: {
+              show: true,
+              formatter: p => `${fmt(p.data.value[2], "%", 1)}${isSignificant(rows[p.data.value[1]]) ? " *" : ""}`,
+              position: "right",
+              color: COLORS.ink,
+              fontWeight: 900,
+              fontSize: 10
+            }
+          }
+        ]
+      };
+    }
+
+    function histogram(values, bins = 28) {
+      const numeric = values.map(num).filter(value => Number.isFinite(value));
+      const min = Math.min(...numeric);
+      const max = Math.max(...numeric);
+      const width = Math.max((max - min) / bins, 1);
+      const counts = Array.from({ length: bins }, (_, index) => [min + width * (index + 0.5), 0]);
+      numeric.forEach(value => {
+        const index = Math.min(bins - 1, Math.max(0, Math.floor((value - min) / width)));
+        counts[index][1] += 1;
+      });
+      return counts.map(([x, count]) => [x, count / Math.max(numeric.length, 1)]);
+    }
+
+    function distributionShapeOption() {
+      const restValues = activeRaw(state.metric).filter(row => row.treatment === "REST").map(row => row[state.metric]);
+      const gqlValues = activeRaw(state.metric).filter(row => row.treatment === "GRAPHQL").map(row => row[state.metric]);
+      return {
+        ...baseChartOptions(),
+        grid: { left: 58, right: 30, top: 36, bottom: 48 },
+        legend: { top: 0, right: 0 },
+        xAxis: {
+          type: "value",
+          axisLabel: { formatter: value => axisFmt(value, state.metric) },
+          splitLine: { lineStyle: { color: COLORS.soft } }
+        },
+        yAxis: {
+          type: "value",
+          axisLabel: { formatter: value => fmt(value * 100, "%", 0) },
+          splitLine: { lineStyle: { color: COLORS.soft } }
+        },
+        tooltip: {
+          trigger: "axis",
+          formatter: params => params.map(p => `${p.seriesName}: ${fmt(p.value[1] * 100, "%", 1)} em ${axisFmt(p.value[0])}`).join("<br>")
+        },
+        series: [
+          {
+            name: "REST",
+            type: "line",
+            smooth: true,
+            showSymbol: false,
+            areaStyle: { opacity: 0.14 },
+            lineStyle: { width: 3, color: COLORS.rest },
+            itemStyle: { color: COLORS.rest },
+            data: histogram(restValues)
+          },
+          {
+            name: "GraphQL",
+            type: "line",
+            smooth: true,
+            showSymbol: false,
+            areaStyle: { opacity: 0.14 },
+            lineStyle: { width: 3, color: COLORS.graphql },
+            itemStyle: { color: COLORS.graphql },
+            data: histogram(gqlValues)
+          }
+        ]
+      };
+    }
+
+    function sizeRatioOption() {
+      const rows = statRows("response_size_bytes");
+      const scenarios = rows.map(row => labelScenario(row.scenario));
+      const ratios = rows.map(row => {
+        const rest = processedValue(row.scenario, "REST", "response_size_bytes", state.summaryField);
+        const gql = processedValue(row.scenario, "GRAPHQL", "response_size_bytes", state.summaryField);
+        return gql ? rest / gql : 0;
+      });
+      return {
+        ...baseChartOptions(),
+        grid: { left: 112, right: 42, top: 34, bottom: 42 },
+        xAxis: {
+          type: "value",
+          axisLabel: { formatter: value => `${fmt(value, "x", 1)}` },
+          splitLine: { lineStyle: { color: COLORS.soft } }
+        },
+        yAxis: {
+          type: "category",
+          data: scenarios,
+          axisLabel: { color: COLORS.muted }
+        },
+        tooltip: {
+          trigger: "item",
+          formatter: p => {
+            const row = rows[p.dataIndex];
+            return `${labelScenario(row.scenario)}<br>REST / GraphQL: <b>${fmt(p.value[0], "x", 2)}</b><br>Dif.: ${fmt(improvement(row), "%")}`;
+          }
+        },
+        series: [{
+          name: "Razao",
+          type: "scatter",
+          symbolSize: value => 12 + Math.min(18, Math.abs(value[0] - 1) * 8),
+          data: ratios.map((ratio, index) => ({
+            value: [ratio, scenarios[index]],
+            itemStyle: {
+              color: ratio >= 1 ? COLORS.good : COLORS.bad,
+              borderColor: "#fff",
+              borderWidth: 2
+            }
+          })),
+          markLine: {
+            symbol: "none",
+            data: [{ xAxis: 1, name: "paridade" }],
+            label: { formatter: "1x" },
+            lineStyle: { color: COLORS.ink, type: "dashed" }
+          },
+          label: {
+            show: true,
+            position: "right",
+            formatter: p => fmt(p.value[0], "x", 2),
+            color: COLORS.ink,
+            fontWeight: 900
+          }
+        }]
+      };
+    }
+
+    function trendOption() {
+      const grouped = groupBy(activeRaw(state.metric), row => `${row.repetition}-${row.treatment}`);
+      const reps = unique(activeRaw(state.metric).map(row => row.repetition)).sort((a, b) => num(a) - num(b));
+      const series = ["REST", "GRAPHQL"].map(treatment => ({
+        name: treatment,
+        type: "line",
+        smooth: true,
+        symbolSize: 4,
+        data: reps.map(rep => {
+          const values = activeRaw(state.metric).filter(row => row.repetition === rep && row.treatment === treatment).map(row => row[state.metric]);
+          return median(values);
+        }),
+        lineStyle: { width: 2 },
+        itemStyle: { color: treatment === "REST" ? COLORS.rest : COLORS.graphql }
+      }));
+      return {
+        ...baseChartOptions(),
+        grid: { left: 58, right: 28, top: 42, bottom: 48 },
+        legend: { top: 2, right: 4 },
+        xAxis: { type: "category", data: reps, name: "Repeticao", axisLabel: { color: COLORS.muted } },
+        yAxis: {
+          type: "value",
+          axisLabel: { formatter: value => axisFmt(value, state.metric) },
+          splitLine: { lineStyle: { color: COLORS.soft } }
+        },
+        tooltip: { trigger: "axis" },
+        series
+      };
+    }
+
+    function treatmentIndexOption() {
+      const rows = statRows(state.metric);
+      const scenarios = rows.map(row => labelScenario(row.scenario));
+      const gqlIndex = rows.map(row => {
+        const rest = processedValue(row.scenario, "REST", state.metric, state.summaryField);
+        const gql = processedValue(row.scenario, "GRAPHQL", state.metric, state.summaryField);
+        return rest ? (gql / rest) * 100 : 0;
+      });
+      return {
+        ...baseChartOptions(),
+        grid: { left: 106, right: 42, top: 30, bottom: 42 },
+        xAxis: {
+          type: "value",
+          max: Math.max(125, ...gqlIndex) * 1.05,
+          axisLabel: { formatter: "{value}" },
+          splitLine: { lineStyle: { color: COLORS.soft } }
+        },
+        yAxis: {
+          type: "category",
+          data: scenarios,
+          axisLabel: { color: COLORS.muted }
+        },
+        tooltip: {
+          trigger: "axis",
+          formatter: params => {
+            const index = params[0].dataIndex;
+            const row = rows[index];
+            const rest = processedValue(row.scenario, "REST", state.metric, state.summaryField);
+            const gql = processedValue(row.scenario, "GRAPHQL", state.metric, state.summaryField);
+            return `${labelScenario(row.scenario)}<br>REST baseline: <b>${axisFmt(rest)}</b><br>GraphQL: <b>${axisFmt(gql)}</b><br>GraphQL indice: ${fmt(gqlIndex[index], "", 1)}<br>Ganho: ${fmt(improvement(row), "%")}`;
+          }
+        },
+        series: [
+          {
+            name: "REST = 100",
+            type: "bar",
+            data: rows.map(() => 100),
+            barWidth: 16,
+            itemStyle: { color: "rgba(24, 33, 47, 0.08)", borderColor: "rgba(24, 33, 47, 0.18)", borderWidth: 1, borderRadius: [0, 5, 5, 0] },
+            label: { show: false }
+          },
+          {
+            name: "GraphQL",
+            type: "bar",
+            data: gqlIndex.map((value, index) => ({
+              value,
+              itemStyle: { color: value <= 100 ? COLORS.graphql : COLORS.bad, borderRadius: [0, 5, 5, 0] }
+            })),
+            barWidth: 16,
+            barGap: "-70%",
+            label: {
+              show: true,
+              formatter: p => `${fmt(p.value, "", 1)}`,
+              position: "right",
+              color: COLORS.ink,
+              fontWeight: 900
+            },
+            markLine: {
+              symbol: "none",
+              data: [{ xAxis: 100 }],
+              label: { formatter: "REST 100" },
+              lineStyle: { color: COLORS.line, type: "dashed" }
+            }
+          }
+        ]
+      };
+    }
+
+    function pvalueOption() {
+      const rows = statRows(state.metric);
+      return {
+        ...baseChartOptions(),
+        grid: { left: 112, right: 32, top: 26, bottom: 36 },
+        xAxis: {
+          type: "value",
+          min: 0,
+          max: Math.max(0.1, state.alpha * 2),
+          axisLabel: { formatter: value => fmt(value, "", 3) },
+          splitLine: { lineStyle: { color: COLORS.soft } }
+        },
+        yAxis: { type: "category", data: rows.map(row => labelScenario(row.scenario)), axisLabel: { color: COLORS.muted } },
+        tooltip: { trigger: "axis" },
+        series: [{
+          name: "p Holm",
+          type: "bar",
+          data: rows.map(row => ({
+            value: num(row.holm_p_value),
+            itemStyle: { color: isSignificant(row) ? COLORS.good : COLORS.bad, borderRadius: [0, 5, 5, 0] }
+          })),
+          markLine: {
+            symbol: "none",
+            data: [{ xAxis: state.alpha, name: "alpha" }],
+            label: { formatter: `alpha ${fmt(state.alpha, "", 2)}` },
+            lineStyle: { color: COLORS.ink, type: "dashed" }
+          }
+        }]
+      };
+    }
+
+    function statsEffectPlotOption() {
+      const scenarios = selectedScenarios().map(labelScenario);
+      const visibleRows = statRowsAll.filter(row => state.selectedScenarios.has(row.scenario) && (!state.significantOnly || isSignificant(row)));
+      const series = METRICS.map(metric => {
+        const metricRows = visibleRows.filter(row => row.metric === metric);
+        return {
+          name: METRIC_SHORT[metric],
+          type: "scatter",
+          symbolSize: value => value[4] ? 13 : 9,
+          data: metricRows.map(row => {
+            const diff = improvement(row);
+            const significant = isSignificant(row);
+            return {
+              name: `${labelScenario(row.scenario)} - ${METRIC_SHORT[metric]}`,
+              value: [diff, labelScenario(row.scenario), num(row.holm_p_value), num(row.effect_size), significant ? 1 : 0],
+              itemStyle: {
+                color: metric === "response_time_ms" ? COLORS.rest : COLORS.graphql,
+                opacity: significant ? 0.92 : 0.28,
+                borderColor: significant ? "#fff" : "#94a3b8",
+                borderWidth: significant ? 2 : 1
+              }
+            };
+          }),
+          label: {
+            show: true,
+            formatter: p => p.value[4] ? fmt(p.value[0], "%", 1) : "n/s",
+            position: "right",
+            color: COLORS.ink,
+            fontWeight: 900,
+            fontSize: 10
+          }
+        };
+      });
+      return {
+        ...baseChartOptions(),
+        grid: { left: 104, right: 64, top: 38, bottom: 64 },
+        legend: { top: 0, right: 0, itemWidth: 10, itemHeight: 10 },
+        xAxis: {
+          type: "value",
+          name: "Diferenca REST - GraphQL (%)",
+          nameLocation: "middle",
+          nameGap: 40,
+          axisLabel: { formatter: "{value}%" },
+          splitLine: { lineStyle: { color: COLORS.soft } }
+        },
+        yAxis: { type: "category", data: scenarios, axisLabel: { color: COLORS.muted } },
+        tooltip: {
+          trigger: "item",
+          formatter: p => {
+            const direction = p.value[0] >= 0 ? "GraphQL menor" : "REST menor";
+            const conclusion = p.value[4] ? direction : "Nao significativo";
+            return `${p.name}<br>Conclusao: <b>${conclusion}</b><br>Dif. REST - GraphQL: ${fmt(p.value[0], "%")}<br>p Holm: ${fmt(p.value[2], "", 4)}<br>Efeito: ${fmt(p.value[3], "", 2)}`;
+          }
+        },
+        series: [
+          ...series,
+          {
+            type: "line",
+            data: [[0, scenarios[0]], [0, scenarios[scenarios.length - 1]]],
+            symbol: "none",
+            silent: true,
+            lineStyle: { color: COLORS.line, type: "dashed", width: 1.5 },
+            tooltip: { show: false }
+          }
+        ]
+      };
+    }
+
+    function renderOverview() {
+      const rows = statRows(state.metric);
+      const favorable = rows.filter(row => improvement(row) > 0).length;
+      const sig = rows.filter(isSignificant).length;
+      const winner = favorable >= Math.ceil(rows.length / 2) ? "GraphQL" : "REST";
+      document.getElementById("overview").innerHTML = [
+        renderKpis(rows),
+        card("overview-payoff", "Quadrante de ganhos: tempo vs tamanho"),
+        card("overview-outcome", `Barras agrupadas: ${METRIC_LABELS[state.metric]}`),
+        summary(`${winner} lidera na visao filtrada de ${METRIC_LABELS[state.metric].toLowerCase()}. ${favorable} de ${rows.length} cenarios favorecem GraphQL; ${sig} passam no limiar alpha configurado.`, winner === "GraphQL" ? "good" : "bad")
+      ].join("");
+      renderChart("overview-payoff", payoffOption());
+      renderChart("overview-outcome", outcomeStripOption());
+    }
+
+    function renderRq() {
+      const rows = statRows(state.metric);
+      const favorable = rows.filter(row => improvement(row) > 0).length;
+      const sig = rows.filter(isSignificant).length;
+      document.getElementById("rq").innerHTML = [
+        renderKpis(rows),
+        card("rq-impact", `Barras divergentes: diferenca percentual`),
+        card("rq-slope", `Barra indexada: GraphQL com REST = 100`),
+        summary(`${favorable} de ${rows.length} cenarios indicam vantagem de GraphQL em ${METRIC_LABELS[state.metric].toLowerCase()}. ${sig} diferencas sao significativas no alpha atual.`, favorable >= Math.ceil(rows.length / 2) ? "good" : "bad")
+      ].join("");
+      renderChart("rq-impact", impactRankingOption(state.metric));
+      renderChart("rq-slope", treatmentIndexOption());
+    }
+
+    function renderDistribution() {
+      const firstChartTitle = state.metric === "response_size_bytes"
+        ? "Dot plot: razao REST / GraphQL"
+        : `Densidade: ${METRIC_LABELS[state.metric]}`;
+      document.getElementById("distribution").innerHTML = [
+        renderKpis(statRows(state.metric)),
+        card("dist-box", firstChartTitle),
+        card("dist-trend", "Linha temporal: estabilidade por repeticao"),
+        summary(state.metric === "response_size_bytes"
+          ? "Tamanho de resposta quase nao varia entre repeticoes, entao a razao REST/GraphQL por cenario comunica melhor que uma distribuicao achatada."
+          : "Use os filtros de cenario e a metrica para verificar dispersao, assimetria, outliers e possiveis efeitos de aquecimento ao longo das repeticoes.", "")
+      ].join("");
+      renderChart("dist-box", state.metric === "response_size_bytes" ? sizeRatioOption() : distributionShapeOption());
+      renderChart("dist-trend", trendOption());
+    }
+
+    function renderStats() {
+      const rows = statRowsAll.filter(row => state.selectedScenarios.has(row.scenario));
+      const visibleRows = state.significantOnly ? rows.filter(isSignificant) : rows;
+      const sig = visibleRows.filter(isSignificant).length;
+      const bestTime = Math.max(...statRows("response_time_ms").map(improvement), 0);
+      const bestSize = Math.max(...statRows("response_size_bytes").map(improvement), 0);
+      document.getElementById("stats").innerHTML = [
+        kpi("Alpha", fmt(state.alpha, "", 2), "Parametro interativo de significancia"),
+        kpi("Significativos", `${sig}/${visibleRows.length}`, "Com filtros atuais", sig ? "good" : ""),
+        kpi("Maior ganho tempo", fmt(bestTime, "%"), "REST - GraphQL", "good"),
+        kpi("Maior ganho tamanho", fmt(bestSize, "%"), "REST - GraphQL", "good"),
+        card("stats-parallel", "Dot plot: efeito e decisao estatistica"),
+        tableCard(visibleRows, ""),
+      ].join("");
+      renderChart("stats-parallel", statsEffectPlotOption());
+    }
+
+    function render() {
+      buildScenarioChips();
+      document.getElementById("alpha-value").textContent = fmt(state.alpha, "", 2);
+      document.querySelectorAll("#metric-control button").forEach(button => {
+        button.classList.toggle("active", button.dataset.metric === state.metric);
+      });
+      document.querySelectorAll(".tabs button").forEach(button => {
+        button.classList.toggle("active", button.dataset.tab === state.activeTab);
+      });
+      document.querySelectorAll(".panel").forEach(panel => panel.classList.toggle("active", panel.id === state.activeTab));
+      charts.forEach(chart => chart.dispose());
+      charts.clear();
+
+      if (state.activeTab === "overview") renderOverview();
+      if (state.activeTab === "rq") renderRq();
+      if (state.activeTab === "distribution") renderDistribution();
+      if (state.activeTab === "stats") renderStats();
+
+      requestAnimationFrame(() => charts.forEach(chart => chart.resize()));
+    }
+
+    function setupControls() {
+      document.querySelectorAll(".tabs button").forEach(button => {
+        button.addEventListener("click", () => {
+          state.activeTab = button.dataset.tab;
+          render();
+        });
+      });
+      document.querySelectorAll("#metric-control button").forEach(button => {
+        button.addEventListener("click", () => {
+          state.metric = button.dataset.metric;
+          render();
+        });
+      });
+      document.getElementById("summary-field").addEventListener("change", event => {
+        state.summaryField = event.target.value;
+        render();
+      });
+      document.getElementById("sort-by").addEventListener("change", event => {
+        state.sortBy = event.target.value;
+        render();
+      });
+      document.getElementById("alpha-control").addEventListener("input", event => {
+        state.alpha = Number(event.target.value);
+        render();
+      });
+      document.getElementById("significant-only").addEventListener("change", event => {
+        state.significantOnly = event.target.checked;
+        render();
+      });
+      window.addEventListener("resize", () => charts.forEach(chart => chart.resize()));
     }
 
     async function load() {
-      const [processedText, statsText] = await Promise.all([
+      if (!window.echarts) {
+        document.getElementById("library-warning").style.display = "block";
+        document.getElementById("status").textContent = "Biblioteca de graficos indisponivel.";
+        return;
+      }
+      const [rawText, processedText, statsText] = await Promise.all([
+        fetch("/data/raw_results.csv").then(response => response.ok ? response.text() : ""),
         fetch("/data/processed_results.csv").then(response => response.ok ? response.text() : ""),
         fetch("/data/statistical_results.csv").then(response => response.ok ? response.text() : "")
       ]);
-      if (!processedText || !statsText) {
+      if (!rawText || !processedText || !statsText) {
         document.getElementById("status").textContent = "Execute a coleta e a analise para gerar os CSVs.";
         return;
       }
-      const processed = parseCsv(processedText);
-      const stats = parseCsv(statsText);
-      document.getElementById("status").textContent = `${processed.length} linhas descritivas e ${stats.length} testes carregados.`;
+      rawRows = parseCsv(rawText).map(row => ({ ...row, success: String(row.success).toLowerCase() }));
+      processedRows = parseCsv(processedText);
+      statRowsAll = parseCsv(statsText);
+      allScenarios = unique(statRowsAll.map(row => row.scenario)).sort();
+      state.selectedScenarios = new Set(allScenarios);
 
-      const restTime = groupedMedian(processed, "response_time_ms", "REST");
-      const gqlTime = groupedMedian(processed, "response_time_ms", "GRAPHQL");
-      const restSize = groupedMedian(processed, "response_size_bytes", "REST");
-      const gqlSize = groupedMedian(processed, "response_size_bytes", "GRAPHQL");
-
-      document.getElementById("overview").innerHTML = [
-        metric("Mediana REST tempo", fmt(restTime, " ms"), "Mediana das medianas por cenario"),
-        metric("Mediana GraphQL tempo", fmt(gqlTime, " ms"), "Mediana das medianas por cenario"),
-        metric("Reducao GraphQL tamanho", fmt(((restSize - gqlSize) / restSize) * 100, "%"), "Baseada nas medianas agregadas"),
-        barChart(processed, "response_time_ms", "Tempo mediano por cenario"),
-        barChart(processed, "response_size_bytes", "Tamanho mediano por cenario"),
-        conclusion(stats, "response_time_ms", "tempo")
-      ].join("");
-
-      document.getElementById("rq1").innerHTML = [
-        metric("REST", fmt(restTime, " ms"), "Tempo mediano"),
-        metric("GraphQL", fmt(gqlTime, " ms"), "Tempo mediano"),
-        metric("Diferenca", fmt(restTime - gqlTime, " ms"), "REST - GraphQL"),
-        barChart(processed, "response_time_ms", "Boxplot sintetico por medianas"),
-        statsTable(stats, "response_time_ms"),
-        conclusion(stats, "response_time_ms", "tempo de resposta")
-      ].join("");
-
-      document.getElementById("rq2").innerHTML = [
-        metric("REST", fmt(restSize, " bytes"), "Tamanho mediano"),
-        metric("GraphQL", fmt(gqlSize, " bytes"), "Tamanho mediano"),
-        metric("Diferenca", fmt(restSize - gqlSize, " bytes"), "REST - GraphQL"),
-        barChart(processed, "response_size_bytes", "Tamanho mediano por cenario"),
-        statsTable(stats, "response_size_bytes"),
-        conclusion(stats, "response_size_bytes", "tamanho da resposta")
-      ].join("");
-
-      document.getElementById("stats").innerHTML = [
-        statsTable(stats),
-        conclusion(stats, "response_time_ms", "tempo"),
-        conclusion(stats, "response_size_bytes", "tamanho")
-      ].join("");
+      const validCount = rawRows.filter(row => row.success === "true").length;
+      const repetitions = unique(rawRows.map(row => row.repetition)).length;
+      document.getElementById("status").textContent = `${validCount} medicoes validas, ${repetitions} repeticoes por cenario, ${statRowsAll.length} testes pareados.`;
+      setupControls();
+      render();
     }
 
     load().catch(error => {
