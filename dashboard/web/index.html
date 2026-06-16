@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 05 - REST vs GraphQL</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172026;
+      --muted: #61717b;
+      --line: #d8e0e4;
+      --rest: #2563eb;
+      --graphql: #c026d3;
+      --surface: #f7f9fa;
+      --good: #147d64;
+      --warn: #b45309;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background: white;
+    }
+    main {
+      width: min(1280px, 100vw);
+      aspect-ratio: 16 / 9;
+      min-height: 720px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 16px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 12px;
+    }
+    h1 { margin: 0; font-size: 26px; letter-spacing: 0; }
+    .status { color: var(--muted); font-size: 14px; }
+    .tabs { display: flex; gap: 8px; }
+    .tabs button {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--ink);
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .tabs button.active {
+      background: var(--ink);
+      color: white;
+      border-color: var(--ink);
+    }
+    .panel {
+      display: none;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: auto 1fr;
+      gap: 16px;
+      min-height: 0;
+    }
+    .panel.active { display: grid; }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: var(--surface);
+      min-height: 96px;
+    }
+    .metric h2 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .metric .value { font-size: 26px; font-weight: 800; }
+    .metric .sub { margin-top: 6px; color: var(--muted); font-size: 13px; }
+    .wide { grid-column: span 6; }
+    .third { grid-column: span 4; }
+    .full { grid-column: 1 / -1; }
+    .chart, .table-wrap, .conclusion {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .chart h2, .table-wrap h2, .conclusion h2 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+    svg { width: 100%; height: 285px; display: block; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+    th { background: var(--surface); }
+    .positive { color: var(--good); font-weight: 800; }
+    .negative { color: var(--warn); font-weight: 800; }
+    .conclusion p { margin: 0; line-height: 1.45; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Lab 05 - REST vs GraphQL</h1>
+        <div class="status" id="status">Carregando resultados...</div>
+      </div>
+      <nav class="tabs">
+        <button data-tab="overview" class="active">Visao Geral</button>
+        <button data-tab="rq1">RQ1 Tempo</button>
+        <button data-tab="rq2">RQ2 Tamanho</button>
+        <button data-tab="stats">Estatistica</button>
+      </nav>
+    </header>
+
+    <section id="overview" class="panel active"></section>
+    <section id="rq1" class="panel"></section>
+    <section id="rq2" class="panel"></section>
+    <section id="stats" class="panel"></section>
+  </main>
+
+  <script>
+    const tabs = document.querySelectorAll(".tabs button");
+    tabs.forEach(button => button.addEventListener("click", () => {
+      tabs.forEach(item => item.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(item => item.classList.remove("active"));
+      button.classList.add("active");
+      document.getElementById(button.dataset.tab).classList.add("active");
+    }));
+
+    function parseCsv(text) {
+      const lines = text.trim().split(/\r?\n/);
+      const headers = lines.shift().split(",");
+      return lines.map(line => {
+        const values = [];
+        let current = "";
+        let quoted = false;
+        for (const char of line) {
+          if (char === '"') quoted = !quoted;
+          else if (char === "," && !quoted) {
+            values.push(current);
+            current = "";
+          } else {
+            current += char;
+          }
+        }
+        values.push(current);
+        return Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""]));
+      });
+    }
+
+    function number(value) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function fmt(value, suffix = "") {
+      return `${number(value).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}${suffix}`;
+    }
+
+    function metric(title, value, sub) {
+      return `<article class="metric third"><h2>${title}</h2><div class="value">${value}</div><div class="sub">${sub}</div></article>`;
+    }
+
+    function groupedMedian(rows, metricName, treatment) {
+      const values = rows.filter(row => row.metric === metricName && row.treatment === treatment).map(row => number(row.median));
+      values.sort((a, b) => a - b);
+      if (!values.length) return 0;
+      const middle = Math.floor(values.length / 2);
+      return values.length % 2 ? values[middle] : (values[middle - 1] + values[middle]) / 2;
+    }
+
+    function barChart(rows, metricName, title) {
+      const data = rows.filter(row => row.metric === metricName);
+      const scenarios = [...new Set(data.map(row => row.scenario))];
+      const max = Math.max(...data.map(row => number(row.median)), 1);
+      const width = 680;
+      const height = 285;
+      const group = width / scenarios.length;
+      const bars = [];
+      scenarios.forEach((scenario, index) => {
+        ["REST", "GRAPHQL"].forEach((treatment, offset) => {
+          const row = data.find(item => item.scenario === scenario && item.treatment === treatment);
+          const value = number(row?.median);
+          const barHeight = (value / max) * 210;
+          const x = index * group + 36 + offset * 26;
+          const y = 235 - barHeight;
+          const color = treatment === "REST" ? "var(--rest)" : "var(--graphql)";
+          bars.push(`<rect x="${x}" y="${y}" width="22" height="${barHeight}" fill="${color}"><title>${scenario} ${treatment}: ${fmt(value)}</title></rect>`);
+        });
+        bars.push(`<text x="${index * group + group / 2}" y="268" text-anchor="middle" font-size="10">${scenario.replace("_", " ")}</text>`);
+      });
+      return `<article class="chart wide"><h2>${title}</h2><svg viewBox="0 0 ${width} ${height}" role="img">${bars.join("")}<line x1="24" y1="235" x2="${width - 8}" y2="235" stroke="#9aa8af"/></svg></article>`;
+    }
+
+    function conclusion(rows, metricName, label) {
+      const stats = rows.filter(row => row.metric === metricName);
+      const favorable = stats.filter(row => number(row.percent_difference_rest_minus_graphql) > 0).length;
+      const significant = stats.filter(row => row.significant === "True" || row.significant === "true").length;
+      const total = stats.length || 1;
+      const cls = favorable >= Math.ceil(total / 2) ? "positive" : "negative";
+      return `<article class="conclusion full"><h2>Conclusao</h2><p><span class="${cls}">${favorable} de ${total}</span> cenarios favorecem GraphQL em ${label}. ${significant} cenarios possuem diferenca significativa apos correcao de Holm.</p></article>`;
+    }
+
+    function statsTable(rows, metricName = null) {
+      const filtered = metricName ? rows.filter(row => row.metric === metricName) : rows;
+      const body = filtered.map(row => `<tr>
+        <td>${row.scenario}</td>
+        <td>${row.metric.replace("response_", "").replace("_", " ")}</td>
+        <td>${row.test}</td>
+        <td>${fmt(row.holm_p_value)}</td>
+        <td>${fmt(row.effect_size)}</td>
+        <td>${fmt(row.percent_difference_rest_minus_graphql, "%")}</td>
+        <td>${row.significant}</td>
+      </tr>`).join("");
+      return `<article class="table-wrap full"><h2>Resultados Estatisticos</h2><table><thead><tr><th>Cenario</th><th>Metrica</th><th>Teste</th><th>p Holm</th><th>Efeito</th><th>Dif. %</th><th>Signif.</th></tr></thead><tbody>${body}</tbody></table></article>`;
+    }
+
+    async function load() {
+      const [processedText, statsText] = await Promise.all([
+        fetch("/data/processed_results.csv").then(response => response.ok ? response.text() : ""),
+        fetch("/data/statistical_results.csv").then(response => response.ok ? response.text() : "")
+      ]);
+      if (!processedText || !statsText) {
+        document.getElementById("status").textContent = "Execute a coleta e a analise para gerar os CSVs.";
+        return;
+      }
+      const processed = parseCsv(processedText);
+      const stats = parseCsv(statsText);
+      document.getElementById("status").textContent = `${processed.length} linhas descritivas e ${stats.length} testes carregados.`;
+
+      const restTime = groupedMedian(processed, "response_time_ms", "REST");
+      const gqlTime = groupedMedian(processed, "response_time_ms", "GRAPHQL");
+      const restSize = groupedMedian(processed, "response_size_bytes", "REST");
+      const gqlSize = groupedMedian(processed, "response_size_bytes", "GRAPHQL");
+
+      document.getElementById("overview").innerHTML = [
+        metric("Mediana REST tempo", fmt(restTime, " ms"), "Mediana das medianas por cenario"),
+        metric("Mediana GraphQL tempo", fmt(gqlTime, " ms"), "Mediana das medianas por cenario"),
+        metric("Reducao GraphQL tamanho", fmt(((restSize - gqlSize) / restSize) * 100, "%"), "Baseada nas medianas agregadas"),
+        barChart(processed, "response_time_ms", "Tempo mediano por cenario"),
+        barChart(processed, "response_size_bytes", "Tamanho mediano por cenario"),
+        conclusion(stats, "response_time_ms", "tempo")
+      ].join("");
+
+      document.getElementById("rq1").innerHTML = [
+        metric("REST", fmt(restTime, " ms"), "Tempo mediano"),
+        metric("GraphQL", fmt(gqlTime, " ms"), "Tempo mediano"),
+        metric("Diferenca", fmt(restTime - gqlTime, " ms"), "REST - GraphQL"),
+        barChart(processed, "response_time_ms", "Boxplot sintetico por medianas"),
+        statsTable(stats, "response_time_ms"),
+        conclusion(stats, "response_time_ms", "tempo de resposta")
+      ].join("");
+
+      document.getElementById("rq2").innerHTML = [
+        metric("REST", fmt(restSize, " bytes"), "Tamanho mediano"),
+        metric("GraphQL", fmt(gqlSize, " bytes"), "Tamanho mediano"),
+        metric("Diferenca", fmt(restSize - gqlSize, " bytes"), "REST - GraphQL"),
+        barChart(processed, "response_size_bytes", "Tamanho mediano por cenario"),
+        statsTable(stats, "response_size_bytes"),
+        conclusion(stats, "response_size_bytes", "tamanho da resposta")
+      ].join("");
+
+      document.getElementById("stats").innerHTML = [
+        statsTable(stats),
+        conclusion(stats, "response_time_ms", "tempo"),
+        conclusion(stats, "response_size_bytes", "tamanho")
+      ].join("");
+    }
+
+    load().catch(error => {
+      document.getElementById("status").textContent = error.message;
+    });
+  </script>
+</body>
+</html>
