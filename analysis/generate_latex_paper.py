@@ -235,29 +235,27 @@ def build_stats(raw: pd.DataFrame, processed: pd.DataFrame, statistical: pd.Data
 
 
 def chart_canvas(path: Path, title: str, subtitle: str | None = None):
-    width, height = landscape(letter)
+    width, height = 270, 205
     c = canvas.Canvas(str(path), pagesize=(width, height))
     c.setFillColor(hex_color(COLORS["card"]))
     c.rect(0, 0, width, height, fill=1, stroke=0)
     c.setFillColor(hex_color(COLORS["text"]))
-    c.setFont("Helvetica-Bold", 18)
-    c.drawString(34, height - 38, title)
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(8, height - 13, title)
     if subtitle:
         c.setFillColor(hex_color(COLORS["muted"]))
-        c.setFont("Helvetica", 10)
-        c.drawString(34, height - 55, subtitle)
+        c.setFont("Helvetica", 5.2)
+        c.drawString(8, height - 21, subtitle[:96])
     return c, width, height
 
 
 def draw_footer(c, width: float):
-    c.setFillColor(hex_color(COLORS["muted"]))
-    c.setFont("Helvetica", 8)
-    c.drawRightString(width - 32, 20, "Lab 05 - REST vs GraphQL")
+    return
 
 
 def draw_axis_label(c, text: str, x: float, y: float):
     c.setFillColor(hex_color(COLORS["muted"]))
-    c.setFont("Helvetica", 9)
+    c.setFont("Helvetica", 6.2)
     c.drawCentredString(x, y, text)
 
 
@@ -268,12 +266,12 @@ def make_bar_chart(statistical: pd.DataFrame, metric: str, output: Path) -> None
     subtitle = "Valores positivos indicam menor mediana em GraphQL; valores negativos favorecem REST."
     c, width, height = chart_canvas(output, title, subtitle)
 
-    left, right, top, bottom = 150, 48, height - 88, 70
+    left, right, top, bottom = 70, 24, height - 38, 28
     plot_w = width - left - right
     plot_h = top - bottom
     values = rows["percent_difference_rest_minus_graphql"].tolist()
-    min_v = min(min(values), -5)
-    max_v = max(max(values), 5)
+    min_v = min(math.floor(min(values) / 10) * 10, -20)
+    max_v = max(math.ceil(max(values) / 10) * 10, 100)
     span = max_v - min_v
 
     def x_scale(value: float) -> float:
@@ -282,39 +280,45 @@ def make_bar_chart(statistical: pd.DataFrame, metric: str, output: Path) -> None
     zero_x = x_scale(0)
     c.setStrokeColor(hex_color(COLORS["border"]))
     c.setLineWidth(1)
-    for tick in np.linspace(math.floor(min_v / 20) * 20, math.ceil(max_v / 20) * 20, 6):
+    tick_start = int(math.ceil(min_v / 20) * 20)
+    tick_end = int(math.floor(max_v / 20) * 20)
+    for tick in range(tick_start, tick_end + 1, 20):
         x = x_scale(float(tick))
         c.setStrokeColor(hex_color(COLORS["grid"]))
         c.line(x, bottom, x, top)
         c.setFillColor(hex_color(COLORS["muted"]))
-        c.setFont("Helvetica", 8)
-        c.drawCentredString(x, bottom - 14, f"{tick:.0f}%")
+        c.setFont("Helvetica", 5.8)
+        c.drawCentredString(x, bottom - 10, f"{tick:.0f}%")
     c.setStrokeColor(hex_color(COLORS["text"]))
     c.line(zero_x, bottom, zero_x, top)
 
     row_h = plot_h / len(rows)
-    bar_h = min(26, row_h * 0.58)
+    bar_h = min(13, row_h * 0.54)
     for index, (_, row) in enumerate(rows.iterrows()):
         y = top - row_h * (index + 0.5)
         value = float(row["percent_difference_rest_minus_graphql"])
         color = COLORS["primary"] if value >= 0 else COLORS["secondary"]
         c.setFillColor(hex_color(COLORS["text"]))
-        c.setFont("Helvetica", 10)
-        c.drawRightString(left - 12, y - 3, label_scenario(row["scenario"]))
+        c.setFont("Helvetica", 6.3)
+        c.drawRightString(left - 5, y - 2, label_scenario(row["scenario"]))
         c.setFillColor(hex_color(color))
         x0 = min(zero_x, x_scale(value))
         w = abs(x_scale(value) - zero_x)
         c.roundRect(x0, y - bar_h / 2, max(w, 2), bar_h, 4, fill=1, stroke=0)
         c.setFillColor(hex_color(COLORS["text"]))
-        c.setFont("Helvetica-Bold", 10)
-        label_x = x_scale(value) + (6 if value >= 0 else -6)
-        align = c.drawString if value >= 0 else c.drawRightString
-        align(label_x, y - 3, f"{fmt_float(value, 1)}%")
+        c.setFont("Helvetica-Bold", 6.2)
+        if value >= 0:
+            label_x = min(x_scale(value) + 3, width - 4)
+            align = c.drawString if label_x < width - 8 else c.drawRightString
+        else:
+            label_x = zero_x + 3
+            align = c.drawString
+        align(label_x, y - 2, f"{fmt_float(value, 1)}%")
         if row["significant"]:
             c.setFillColor(hex_color(COLORS["success"]))
-            c.circle(x_scale(value), y + bar_h / 2 + 5, 3, fill=1, stroke=0)
+            c.circle(x_scale(value), y + bar_h / 2 + 3, 1.7, fill=1, stroke=0)
 
-    draw_axis_label(c, "Diferenca percentual REST - GraphQL", left + plot_w / 2, 34)
+    draw_axis_label(c, "Diferenca percentual REST - GraphQL", left + plot_w / 2, 8)
     draw_footer(c, width)
     c.save()
 
@@ -329,13 +333,13 @@ def make_quadrant_chart(statistical: pd.DataFrame, output: Path) -> None:
         "Quadrante superior direito: GraphQL reduz tempo e payload no mesmo cenario.",
     )
 
-    left, right, top, bottom = 82, 60, height - 90, 72
+    left, right, top, bottom = 35, 15, height - 38, 30
     plot_w = width - left - right
     plot_h = top - bottom
     x_values = [float(size.loc[s, "percent_difference_rest_minus_graphql"]) for s in scenarios]
     y_values = [float(time.loc[s, "percent_difference_rest_minus_graphql"]) for s in scenarios]
-    min_x, max_x = min(-5, min(x_values)), max(95, max(x_values))
-    min_y, max_y = min(-5, min(y_values)), max(95, max(y_values))
+    min_x, max_x = min(-5, min(x_values)), max(100, max(x_values))
+    min_y, max_y = min(-20, min(y_values)), max(100, max(y_values))
 
     def x_scale(value: float) -> float:
         return left + (value - min_x) / (max_x - min_x) * plot_w
@@ -348,9 +352,13 @@ def make_quadrant_chart(statistical: pd.DataFrame, output: Path) -> None:
         c.line(x_scale(tick), bottom, x_scale(tick), top)
         c.line(left, y_scale(tick), left + plot_w, y_scale(tick))
         c.setFillColor(hex_color(COLORS["muted"]))
-        c.setFont("Helvetica", 8)
-        c.drawCentredString(x_scale(tick), bottom - 14, f"{tick}%")
-        c.drawRightString(left - 8, y_scale(tick) - 3, f"{tick}%")
+        c.setFont("Helvetica", 5.6)
+        tick_x = x_scale(tick)
+        if tick == 100:
+            c.drawRightString(tick_x, bottom - 9, f"{tick}%")
+        else:
+            c.drawCentredString(tick_x, bottom - 9, f"{tick}%")
+        c.drawRightString(left - 4, y_scale(tick) - 2, f"{tick}%")
     c.setStrokeColor(hex_color(COLORS["border"]))
     c.rect(left, bottom, plot_w, plot_h, fill=0, stroke=1)
     c.setStrokeColor(hex_color(COLORS["text"]))
@@ -363,14 +371,14 @@ def make_quadrant_chart(statistical: pd.DataFrame, output: Path) -> None:
         significant = bool(size.loc[scenario, "significant"] or time.loc[scenario, "significant"])
         color = COLORS["primary"] if x >= 0 and y >= 0 else COLORS["secondary"]
         c.setFillColor(hex_color(color))
-        c.circle(x_scale(x), y_scale(y), 7 if significant else 5, fill=1, stroke=0)
+        c.circle(x_scale(x), y_scale(y), 4.2 if significant else 3.2, fill=1, stroke=0)
         c.setFillColor(hex_color(COLORS["text"]))
-        c.setFont("Helvetica-Bold", 9)
-        c.drawString(x_scale(x) + 9, y_scale(y) + 2, label_scenario(scenario))
+        c.setFont("Helvetica-Bold", 5.6)
+        c.drawString(x_scale(x) + 5, y_scale(y) + 1, label_scenario(scenario))
 
-    draw_axis_label(c, "Ganho em tamanho (%)", left + plot_w / 2, 35)
+    draw_axis_label(c, "Ganho em tamanho (%)", left + plot_w / 2, 8)
     c.saveState()
-    c.translate(26, bottom + plot_h / 2)
+    c.translate(10, bottom + plot_h / 2)
     c.rotate(90)
     draw_axis_label(c, "Ganho em tempo (%)", 0, 0)
     c.restoreState()
@@ -386,7 +394,7 @@ def make_decision_chart(statistical: pd.DataFrame, output: Path) -> None:
         "Decisao estatistica por cenario e metrica",
         "Marcadores opacos sao significativos apos Holm; marcadores claros indicam resultado inconclusivo.",
     )
-    left, right, top, bottom = 125, 60, height - 90, 76
+    left, right, top, bottom = 58, 14, height - 38, 30
     plot_w = width - left - right
     plot_h = top - bottom
     values = rows["percent_difference_rest_minus_graphql"].tolist()
@@ -402,18 +410,18 @@ def make_decision_chart(statistical: pd.DataFrame, output: Path) -> None:
         c.setStrokeColor(hex_color(COLORS["grid"]))
         c.line(x, bottom, x, top)
         c.setFillColor(hex_color(COLORS["muted"]))
-        c.setFont("Helvetica", 8)
-        c.drawCentredString(x, bottom - 14, f"{tick}%")
+        c.setFont("Helvetica", 5.6)
+        c.drawCentredString(x, bottom - 9, f"{tick}%")
     c.setStrokeColor(hex_color(COLORS["text"]))
     c.line(x_scale(0), bottom, x_scale(0), top)
 
-    offsets = {"response_time_ms": 8, "response_size_bytes": -8}
+    offsets = {"response_time_ms": 4.5, "response_size_bytes": -4.5}
     colors = {"response_time_ms": COLORS["primary"], "response_size_bytes": COLORS["secondary"]}
     for index, scenario_label in enumerate(scenarios):
         y = top - row_h * (index + 0.5)
         c.setFillColor(hex_color(COLORS["text"]))
-        c.setFont("Helvetica", 10)
-        c.drawRightString(left - 12, y - 3, scenario_label)
+        c.setFont("Helvetica", 6.3)
+        c.drawRightString(left - 5, y - 2, scenario_label)
         scenario_key = next(key for key, label in SCENARIO_LABELS.items() if label == scenario_label)
         for metric in METRICS:
             row = rows[(rows["scenario"] == scenario_key) & (rows["metric"] == metric)].iloc[0]
@@ -421,19 +429,19 @@ def make_decision_chart(statistical: pd.DataFrame, output: Path) -> None:
             c.setFillColor(hex_color(colors[metric]))
             if not row["significant"]:
                 c.setFillAlpha(0.28)
-            c.circle(x, y + offsets[metric], 5.5, fill=1, stroke=0)
+            c.circle(x, y + offsets[metric], 3.2, fill=1, stroke=0)
             c.setFillAlpha(1)
 
-    legend_x = width - 210
-    legend_y = height - 42
+    legend_x = width - 88
+    legend_y = height - 13
     for i, metric in enumerate(METRICS):
         c.setFillColor(hex_color(colors[metric]))
-        c.circle(legend_x + i * 86, legend_y, 5, fill=1, stroke=0)
+        c.circle(legend_x + i * 43, legend_y, 2.5, fill=1, stroke=0)
         c.setFillColor(hex_color(COLORS["text"]))
-        c.setFont("Helvetica", 9)
-        c.drawString(legend_x + 10 + i * 86, legend_y - 3, metric_short(metric))
+        c.setFont("Helvetica", 5.8)
+        c.drawString(legend_x + 5 + i * 43, legend_y - 2, metric_short(metric))
 
-    draw_axis_label(c, "Diferenca percentual REST - GraphQL", left + plot_w / 2, 36)
+    draw_axis_label(c, "Diferenca percentual REST - GraphQL", left + plot_w / 2, 8)
     draw_footer(c, width)
     c.save()
 
@@ -446,7 +454,7 @@ def make_interval_chart(processed: pd.DataFrame, output: Path) -> None:
         "Distribuicao temporal por tratamento",
         "Pontos representam medianas; linhas mostram o intervalo interquartil de cada cenario.",
     )
-    left, right, top, bottom = 130, 62, height - 88, 72
+    left, right, top, bottom = 58, 16, height - 38, 30
     plot_w = width - left - right
     plot_h = top - bottom
     max_v = max(rows["q3"].max(), rows["median"].max()) * 1.1
@@ -460,33 +468,33 @@ def make_interval_chart(processed: pd.DataFrame, output: Path) -> None:
         c.setStrokeColor(hex_color(COLORS["grid"]))
         c.line(x, bottom, x, top)
         c.setFillColor(hex_color(COLORS["muted"]))
-        c.setFont("Helvetica", 8)
-        c.drawCentredString(x, bottom - 14, f"{tick:.0f} ms")
+        c.setFont("Helvetica", 5.6)
+        c.drawCentredString(x, bottom - 9, f"{tick:.0f}")
 
     for index, scenario in enumerate(scenarios):
         center_y = top - row_h * (index + 0.5)
         c.setFillColor(hex_color(COLORS["text"]))
-        c.setFont("Helvetica", 10)
-        c.drawRightString(left - 12, center_y - 3, label_scenario(scenario))
+        c.setFont("Helvetica", 6.3)
+        c.drawRightString(left - 5, center_y - 2, label_scenario(scenario))
         for treatment, offset, color in [("REST", 8, COLORS["primary"]), ("GRAPHQL", -8, COLORS["secondary"])]:
             row = rows[(rows["scenario"] == scenario) & (rows["treatment"] == treatment)].iloc[0]
             y = center_y + offset
             c.setStrokeColor(hex_color(color))
-            c.setLineWidth(3)
+            c.setLineWidth(1.8)
             c.line(x_scale(float(row["q1"])), y, x_scale(float(row["q3"])), y)
             c.setFillColor(hex_color(color))
-            c.circle(x_scale(float(row["median"])), y, 5, fill=1, stroke=0)
+            c.circle(x_scale(float(row["median"])), y, 2.7, fill=1, stroke=0)
 
-    legend_x = width - 200
-    legend_y = height - 42
+    legend_x = width - 82
+    legend_y = height - 13
     for i, (label, color) in enumerate([("REST", COLORS["primary"]), ("GraphQL", COLORS["secondary"])]):
         c.setFillColor(hex_color(color))
-        c.circle(legend_x + i * 82, legend_y, 5, fill=1, stroke=0)
+        c.circle(legend_x + i * 42, legend_y, 2.5, fill=1, stroke=0)
         c.setFillColor(hex_color(COLORS["text"]))
-        c.setFont("Helvetica", 9)
-        c.drawString(legend_x + 10 + i * 82, legend_y - 3, label)
+        c.setFont("Helvetica", 5.8)
+        c.drawString(legend_x + 5 + i * 42, legend_y - 2, label)
 
-    draw_axis_label(c, "Tempo de resposta (ms)", left + plot_w / 2, 35)
+    draw_axis_label(c, "Tempo de resposta (ms)", left + plot_w / 2, 8)
     draw_footer(c, width)
     c.save()
 
@@ -533,14 +541,18 @@ def generate_latex(raw: pd.DataFrame, processed: pd.DataFrame, statistical: pd.D
 \usepackage{{amsmath}}
 \usepackage{{amssymb}}
 \usepackage{{booktabs}}
-\usepackage{{float}}
+\usepackage{{array}}
+\usepackage{{microtype}}
 \graphicspath{{{{figures/}}}}
+\hypersetup{{colorlinks=true,linkcolor=black,citecolor=black,urlcolor=black}}
 
 \title{{GraphQL vs REST em um Experimento Controlado:\\
 Tempo de Resposta, Tamanho de Payload e Significância Estatística}}
 
-\author{{Laboratório de Experimentação de Software\\
-\small Lab 05 -- GraphQL vs REST}}
+\author{{Amanda Bueno Campos Peixoto\\
+Guilherme Gomes de Brites\\
+Lucas Cerqueira Azevedo\\[0.35em]
+\small Laboratório de Experimentação de Software -- Lab 05}}
 
 \date{{\today}}
 
@@ -583,18 +595,18 @@ Para cada cenário e métrica, as medições foram pareadas por repetição. A d
 
 \subsection{{Visão Geral dos Efeitos}}
 
-\begin{{figure}}[H]
+\begin{{figure}}[!t]
 \centering
-\includegraphics[width=0.95\columnwidth]{{time_gain.pdf}}
+\includegraphics[width=\columnwidth]{{time_gain.pdf}}
 \caption{{Ganho percentual de GraphQL em tempo de resposta. Valores positivos indicam menor mediana em GraphQL.}}
 \label{{fig:time_gain}}
 \end{{figure}}
 
 A Figura \ref{{fig:time_gain}} mostra que GraphQL reduziu fortemente o tempo nos cenários \textit{{nested data}} e \textit{{full profile}}, com ganhos entre {fmt_float(stats["nested_time_min_gain"], 1)}\% e {fmt_float(stats["nested_time_max_gain"], 1)}\%. Esses cenários exigem múltiplas chamadas REST para recompor dados aninhados, enquanto GraphQL resolve a tarefa em uma consulta. Em contraste, consultas simples ficaram próximas da paridade, com diferenças entre {fmt_float(stats["simple_time_min_gain"], 1)}\% e {fmt_float(stats["simple_time_max_gain"], 1)}\%, e sem significância em {fmt_int(stats["no_sig_time"])} dos cinco testes temporais.
 
-\begin{{figure}}[H]
+\begin{{figure}}[!t]
 \centering
-\includegraphics[width=0.95\columnwidth]{{size_gain.pdf}}
+\includegraphics[width=\columnwidth]{{size_gain.pdf}}
 \caption{{Ganho percentual de GraphQL no tamanho da resposta. Valores positivos indicam menor payload em GraphQL.}}
 \label{{fig:size_gain}}
 \end{{figure}}
@@ -603,9 +615,9 @@ A Figura \ref{{fig:size_gain}} evidencia uma vantagem mais consistente em tamanh
 
 \subsection{{Perfil Multivariado}}
 
-\begin{{figure}}[H]
+\begin{{figure}}[!t]
 \centering
-\includegraphics[width=0.95\columnwidth]{{quadrant_profile.pdf}}
+\includegraphics[width=\columnwidth]{{quadrant_profile.pdf}}
 \caption{{Perfil multivariado dos cenários: ganho em tamanho versus ganho em tempo.}}
 \label{{fig:quadrant}}
 \end{{figure}}
@@ -614,9 +626,9 @@ A Figura \ref{{fig:quadrant}} combina as duas métricas. Os cenários aninhados 
 
 \subsection{{Distribuição Temporal}}
 
-\begin{{figure}}[H]
+\begin{{figure}}[!t]
 \centering
-\includegraphics[width=0.95\columnwidth]{{time_intervals.pdf}}
+\includegraphics[width=\columnwidth]{{time_intervals.pdf}}
 \caption{{Medianas e intervalos interquartis do tempo de resposta por tratamento.}}
 \label{{fig:time_intervals}}
 \end{{figure}}
@@ -625,20 +637,22 @@ A Figura \ref{{fig:time_intervals}} mostra que as distribuições de tempo dos c
 
 \subsection{{Decisão Estatística}}
 
-\begin{{figure}}[H]
+\begin{{figure}}[!t]
 \centering
-\includegraphics[width=0.95\columnwidth]{{statistical_decision.pdf}}
+\includegraphics[width=\columnwidth]{{statistical_decision.pdf}}
 \caption{{Decisão estatística por cenário e métrica. Marcadores opacos indicam significância após correção de Holm.}}
 \label{{fig:decision}}
 \end{{figure}}
 
 A Figura \ref{{fig:decision}} resume os {fmt_int(stats["paired_tests"])} testes pareados. Ao todo, {fmt_int(stats["significant_tests"])} foram significativos. Para tempo de resposta, {fmt_int(stats["time_significant"])} de cinco cenários apresentaram diferença significativa. Para tamanho do payload, {fmt_int(stats["size_significant"])} de cinco cenários foram significativos, o que era esperado porque os tamanhos são determinísticos para uma mesma consulta e base de dados.
 
-\begin{{table}}[H]
+\begin{{table*}}[!t]
 \centering
 \caption{{Resumo dos testes pareados. Dif. é REST menos GraphQL; valores positivos favorecem GraphQL.}}
 \label{{tab:tests}}
-\scriptsize
+\footnotesize
+\setlength{{\tabcolsep}}{{6pt}}
+\renewcommand{{\arraystretch}}{{1.12}}
 \begin{{tabular}}{{llrrrrr}}
 \toprule
 Cenário & Métrica & REST & GraphQL & Dif. & p Holm & Sig. \\
@@ -646,7 +660,7 @@ Cenário & Métrica & REST & GraphQL & Dif. & p Holm & Sig. \\
 {table_rows}
 \bottomrule
 \end{{tabular}}
-\end{{table}}
+\end{{table*}}
 
 \section{{Discussão}}
 \label{{sec:discussion}}
@@ -664,8 +678,6 @@ O estudo usa uma API local e uma base sintética; portanto, os resultados não d
 \label{{sec:conclusion}}
 
 Neste experimento controlado, GraphQL apresentou ganhos expressivos nos cenários em que REST precisou realizar múltiplas chamadas ou retornou campos desnecessários. A vantagem mais clara ocorreu em \textit{{{stats["best_time_scenario"]}}}, com {fmt_float(stats["best_time_gain"], 1)}\% de redução na mediana de tempo, e em \textit{{{stats["best_size_scenario"]}}}, com {fmt_float(stats["best_size_gain"], 1)}\% de redução no tamanho da resposta. Para consultas simples, a evidência não sustenta uma superioridade temporal robusta. Assim, a conclusão principal é contextual: GraphQL se destaca quando a consulta precisa compor dados ou controlar seletivamente campos, enquanto REST permanece competitivo em endpoints simples e bem ajustados.
-
-\section*{{Referências}}
 
 \begin{{thebibliography}}{{99}}
 

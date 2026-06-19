@@ -8,14 +8,18 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
-\usepackage{float}
+\usepackage{array}
+\usepackage{microtype}
 \graphicspath{{figures/}}
+\hypersetup{colorlinks=true,linkcolor=black,citecolor=black,urlcolor=black}
 
 \title{GraphQL vs REST em um Experimento Controlado:\\
 Tempo de Resposta, Tamanho de Payload e Significância Estatística}
 
-\author{Laboratório de Experimentação de Software\\
-\small Lab 05 -- GraphQL vs REST}
+\author{Amanda Bueno Campos Peixoto\\
+Guilherme Gomes de Brites\\
+Lucas Cerqueira Azevedo\\[0.35em]
+\small Laboratório de Experimentação de Software -- Lab 05}
 
 \date{\today}
 
@@ -58,18 +62,18 @@ Para cada cenário e métrica, as medições foram pareadas por repetição. A d
 
 \subsection{Visão Geral dos Efeitos}
 
-\begin{figure}[H]
+\begin{figure}[!t]
 \centering
-\includegraphics[width=0.95\columnwidth]{time_gain.pdf}
+\includegraphics[width=\columnwidth]{time_gain.pdf}
 \caption{Ganho percentual de GraphQL em tempo de resposta. Valores positivos indicam menor mediana em GraphQL.}
 \label{fig:time_gain}
 \end{figure}
 
 A Figura \ref{fig:time_gain} mostra que GraphQL reduziu fortemente o tempo nos cenários \textit{nested data} e \textit{full profile}, com ganhos entre 83,1\% e 86,6\%. Esses cenários exigem múltiplas chamadas REST para recompor dados aninhados, enquanto GraphQL resolve a tarefa em uma consulta. Em contraste, consultas simples ficaram próximas da paridade, com diferenças entre -14,7\% e 4,2\%, e sem significância em 3 dos cinco testes temporais.
 
-\begin{figure}[H]
+\begin{figure}[!t]
 \centering
-\includegraphics[width=0.95\columnwidth]{size_gain.pdf}
+\includegraphics[width=\columnwidth]{size_gain.pdf}
 \caption{Ganho percentual de GraphQL no tamanho da resposta. Valores positivos indicam menor payload em GraphQL.}
 \label{fig:size_gain}
 \end{figure}
@@ -78,9 +82,9 @@ A Figura \ref{fig:size_gain} evidencia uma vantagem mais consistente em tamanho 
 
 \subsection{Perfil Multivariado}
 
-\begin{figure}[H]
+\begin{figure}[!t]
 \centering
-\includegraphics[width=0.95\columnwidth]{quadrant_profile.pdf}
+\includegraphics[width=\columnwidth]{quadrant_profile.pdf}
 \caption{Perfil multivariado dos cenários: ganho em tamanho versus ganho em tempo.}
 \label{fig:quadrant}
 \end{figure}
@@ -89,9 +93,9 @@ A Figura \ref{fig:quadrant} combina as duas métricas. Os cenários aninhados ap
 
 \subsection{Distribuição Temporal}
 
-\begin{figure}[H]
+\begin{figure}[!t]
 \centering
-\includegraphics[width=0.95\columnwidth]{time_intervals.pdf}
+\includegraphics[width=\columnwidth]{time_intervals.pdf}
 \caption{Medianas e intervalos interquartis do tempo de resposta por tratamento.}
 \label{fig:time_intervals}
 \end{figure}
@@ -100,20 +104,22 @@ A Figura \ref{fig:time_intervals} mostra que as distribuições de tempo dos cen
 
 \subsection{Decisão Estatística}
 
-\begin{figure}[H]
+\begin{figure}[!t]
 \centering
-\includegraphics[width=0.95\columnwidth]{statistical_decision.pdf}
+\includegraphics[width=\columnwidth]{statistical_decision.pdf}
 \caption{Decisão estatística por cenário e métrica. Marcadores opacos indicam significância após correção de Holm.}
 \label{fig:decision}
 \end{figure}
 
 A Figura \ref{fig:decision} resume os 10 testes pareados. Ao todo, 7 foram significativos. Para tempo de resposta, 2 de cinco cenários apresentaram diferença significativa. Para tamanho do payload, 5 de cinco cenários foram significativos, o que era esperado porque os tamanhos são determinísticos para uma mesma consulta e base de dados.
 
-\begin{table}[H]
+\begin{table*}[!t]
 \centering
 \caption{Resumo dos testes pareados. Dif. é REST menos GraphQL; valores positivos favorecem GraphQL.}
 \label{tab:tests}
-\scriptsize
+\footnotesize
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.12}
 \begin{tabular}{llrrrrr}
 \toprule
 Cenário & Métrica & REST & GraphQL & Dif. & p Holm & Sig. \\
@@ -130,7 +136,7 @@ Cenário & Métrica & REST & GraphQL & Dif. & p Holm & Sig. \\
         user list & Tempo & 19,50 & 22,37 & -14,7\% & 0,7968 & Nao \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \section{Discussão}
 \label{sec:discussion}
@@ -148,8 +154,6 @@ O estudo usa uma API local e uma base sintética; portanto, os resultados não d
 \label{sec:conclusion}
 
 Neste experimento controlado, GraphQL apresentou ganhos expressivos nos cenários em que REST precisou realizar múltiplas chamadas ou retornou campos desnecessários. A vantagem mais clara ocorreu em \textit{full profile}, com 86,6\% de redução na mediana de tempo, e em \textit{post titles}, com 80,3\% de redução no tamanho da resposta. Para consultas simples, a evidência não sustenta uma superioridade temporal robusta. Assim, a conclusão principal é contextual: GraphQL se destaca quando a consulta precisa compor dados ou controlar seletivamente campos, enquanto REST permanece competitivo em endpoints simples e bem ajustados.
-
-\section*{Referências}
 
 \begin{thebibliography}{99}
 

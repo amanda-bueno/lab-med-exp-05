@@ -236,7 +236,7 @@
     .card {
       grid-column: span 6;
       min-height: 248px;
-      padding: 12px;
+      padding: 14px;
       overflow: hidden;
     }
     .card.third { grid-column: span 4; }
@@ -244,7 +244,8 @@
     .card.table-card { overflow: auto; }
     .chart {
       width: 100%;
-      height: 222px;
+      height: 232px;
+      margin-top: 12px;
     }
     .chart.tall { height: 330px; }
     .chart.short { height: 218px; }
@@ -292,6 +293,9 @@
       padding: 10px 12px;
       border-radius: 8px;
       font-weight: 800;
+    }
+    .card h2 {
+      margin-bottom: 0;
     }
     @media (max-width: 520px) {
       main { min-height: auto; }
@@ -545,7 +549,7 @@
     }
 
     function summary(text, tone = "good") {
-      return `<article class="summary ${tone}"><h2>Conclusao automatica</h2><p>${text}</p></article>`;
+      return `<article class="summary ${tone}"><h2>Conclusao</h2><p>${text}</p></article>`;
     }
 
     function card(id, title, className = "") {
@@ -635,7 +639,7 @@
       const values = rows.map(improvement);
       return {
         ...baseChartOptions(),
-        grid: { left: 112, right: 42, top: 28, bottom: 28 },
+        grid: { left: 112, right: 44, top: 42, bottom: 34 },
         xAxis: {
           type: "value",
           axisLabel: { formatter: "{value}%" },
@@ -685,18 +689,20 @@
       });
       return {
         ...baseChartOptions(),
-        grid: { left: 58, right: 38, top: 34, bottom: 54 },
+        grid: { left: 68, right: 44, top: 54, bottom: 64 },
         xAxis: {
           name: "Ganho em tamanho (%)",
           nameLocation: "middle",
-          nameGap: 30,
+          nameGap: 38,
           type: "value",
           axisLabel: { formatter: "{value}%" },
           splitLine: { lineStyle: { color: COLORS.soft } }
         },
         yAxis: {
           name: "Ganho em tempo (%)",
-          nameGap: 32,
+          nameLocation: "middle",
+          nameRotate: 90,
+          nameGap: 46,
           type: "value",
           axisLabel: { formatter: "{value}%" },
           splitLine: { lineStyle: { color: COLORS.soft } }
@@ -705,11 +711,6 @@
           trigger: "item",
           formatter: p => `${p.name}<br>Tamanho: <b>${fmt(p.value[0], "%")}</b><br>Tempo: <b>${fmt(p.value[1], "%")}</b><br>${p.data.significant ? "Significativo em alguma metrica" : "Nao significativo"}`
         },
-        graphic: [
-          { type: "text", right: 46, top: 34, style: { text: "GraphQL vence em ambos", fill: COLORS.good, font: "700 10px Arial" } },
-          { type: "text", left: 76, top: 34, style: { text: "Troca desfavoravel", fill: COLORS.bad, font: "700 10px Arial" } },
-          { type: "text", right: 38, bottom: 62, style: { text: "Menor payload, tempo pior", fill: COLORS.muted, font: "700 10px Arial" } }
-        ],
         series: [{
           type: "scatter",
           symbolSize: value => 12 + Math.min(22, Math.abs(value[2]) / 3),
@@ -741,7 +742,7 @@
       const maxValue = Math.max(...restValues, ...gqlValues, 1);
       return {
         ...baseChartOptions(),
-        grid: { left: 104, right: 48, top: 36, bottom: 38 },
+        grid: { left: 104, right: 48, top: 52, bottom: 42 },
         legend: { top: 0, right: 0, itemWidth: 10, itemHeight: 10, data: ["REST", "GraphQL"] },
         xAxis: {
           type: "value",
@@ -819,7 +820,7 @@
       const gqlValues = activeRaw(state.metric).filter(row => row.treatment === "GRAPHQL").map(row => row[state.metric]);
       return {
         ...baseChartOptions(),
-        grid: { left: 58, right: 30, top: 36, bottom: 48 },
+        grid: { left: 58, right: 30, top: 54, bottom: 50 },
         legend: { top: 0, right: 0 },
         xAxis: {
           type: "value",
@@ -870,7 +871,7 @@
       });
       return {
         ...baseChartOptions(),
-        grid: { left: 112, right: 42, top: 34, bottom: 42 },
+        grid: { left: 112, right: 42, top: 46, bottom: 44 },
         xAxis: {
           type: "value",
           axisLabel: { formatter: value => `${fmt(value, "x", 1)}` },
@@ -934,7 +935,7 @@
       }));
       return {
         ...baseChartOptions(),
-        grid: { left: 58, right: 28, top: 42, bottom: 48 },
+        grid: { left: 58, right: 28, top: 56, bottom: 52 },
         legend: { top: 2, right: 4 },
         xAxis: { type: "category", data: reps, name: "Repeticao", axisLabel: { color: COLORS.muted } },
         yAxis: {
@@ -957,10 +958,10 @@
       });
       return {
         ...baseChartOptions(),
-        grid: { left: 106, right: 42, top: 30, bottom: 42 },
+        grid: { left: 106, right: 50, top: 50, bottom: 44 },
         xAxis: {
           type: "value",
-          max: Math.max(125, ...gqlIndex) * 1.05,
+          max: Math.max(150, Math.ceil(Math.max(125, ...gqlIndex) / 25) * 25),
           axisLabel: { formatter: "{value}" },
           splitLine: { lineStyle: { color: COLORS.soft } }
         },
@@ -1019,7 +1020,7 @@
       const rows = statRows(state.metric);
       return {
         ...baseChartOptions(),
-        grid: { left: 112, right: 32, top: 26, bottom: 36 },
+        grid: { left: 112, right: 32, top: 42, bottom: 38 },
         xAxis: {
           type: "value",
           min: 0,
@@ -1081,7 +1082,7 @@
       });
       return {
         ...baseChartOptions(),
-        grid: { left: 104, right: 64, top: 38, bottom: 64 },
+        grid: { left: 104, right: 64, top: 54, bottom: 64 },
         legend: { top: 0, right: 0, itemWidth: 10, itemHeight: 10 },
         xAxis: {
           type: "value",
