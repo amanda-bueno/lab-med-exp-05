@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import math
+import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def bundled_python_packages() -> Path | None:
+def bundled_python_root() -> Path | None:
     suffix = Path(".cache") / "codex-runtimes" / "codex-primary-runtime" / "dependencies" / "python"
     candidates = [Path.home(), *ROOT.parents]
     for candidate in candidates:
@@ -16,17 +17,36 @@ def bundled_python_packages() -> Path | None:
             return path
     return None
 
+
+def bundled_python_packages() -> Path | None:
+    root = bundled_python_root()
+    if root is None:
+        return None
+    site_packages = root / "Lib" / "site-packages"
+    return site_packages if site_packages.exists() else root
+
+
+def rerun_with_bundled_python() -> None:
+    root = bundled_python_root()
+    if root is None:
+        return
+    executable = root / "python.exe"
+    if executable.exists() and Path(sys.executable).resolve() != executable.resolve():
+        completed = subprocess.run([str(executable), *sys.argv], check=False)
+        raise SystemExit(completed.returncode)
+
 try:
     import numpy as np
     import pandas as pd
-except ModuleNotFoundError:
+except (ModuleNotFoundError, ImportError):
+    rerun_with_bundled_python()
     bundled_packages = bundled_python_packages()
     if bundled_packages is not None:
         sys.path.insert(0, str(bundled_packages))
         try:
             import numpy as np
             import pandas as pd
-        except ModuleNotFoundError as exc:
+        except (ModuleNotFoundError, ImportError) as exc:
             raise SystemExit(
                 "Missing Python dependency. Install it with: python -m pip install pandas numpy"
             ) from exc

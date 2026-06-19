@@ -75,9 +75,9 @@ python -m experiment.run_experiment
 Configuracoes padrao:
 
 - 10 execucoes de aquecimento por cenario e tecnologia;
-- 100 repeticoes validas por cenario;
+- 500 repeticoes validas por cenario;
 - 5 cenarios;
-- 1.000 linhas validas em `data/raw_results.csv`.
+- 5.000 linhas validas em `data/raw_results.csv`.
 
 Para uma execucao curta de verificacao:
 
@@ -98,7 +98,20 @@ Saidas:
 - `data/processed_results.csv`: estatisticas descritivas por cenario, tratamento e metrica;
 - `data/statistical_results.csv`: teste pareado, p-valor corrigido por Holm, tamanho de efeito e diferenca percentual.
 
-## 4. Abrir o dashboard
+Os CSVs atuais representam uma coleta completa com 500 repeticoes por cenario. Se refizer a coleta, rode a analise estatistica novamente para atualizar os arquivos derivados e o artigo.
+
+## 4. Gerar o artigo LaTeX
+
+```powershell
+python -m analysis.generate_latex_paper
+```
+
+Saidas:
+
+- `report/paper.tex`: artigo em formato IEEE;
+- `report/figures/*.pdf`: graficos gerados a partir dos CSVs de analise.
+
+## 5. Abrir o dashboard
 
 ```powershell
 python dashboard/app.py

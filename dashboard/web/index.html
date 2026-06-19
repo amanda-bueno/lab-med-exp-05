@@ -4,32 +4,31 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Lab 05 - REST vs GraphQL</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/echarts@6/dist/echarts.min.js"></script>
   <style>
     :root {
       color-scheme: light;
-      --bg: #f6f8fb;
+      --bg: #f8f9fa;
       --panel: #ffffff;
-      --ink: #18212f;
-      --muted: #66768a;
-      --line: #d8e1ea;
-      --soft: #eef3f7;
-      --rest: #0f766e;
-      --graphql: #e11d48;
-      --good: #059669;
-      --bad: #d97706;
-      --accent: #0891b2;
-      --shadow: 0 16px 34px rgba(24, 33, 47, 0.08);
+      --ink: #1e293b;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --soft: #f1f5f9;
+      --rest: #0d9488;
+      --graphql: #f97316;
+      --good: #10b981;
+      --bad: #f59e0b;
+      --accent: #0d9488;
+      --shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+      --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.10);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      background:
-        linear-gradient(135deg, rgba(8, 145, 178, 0.12), transparent 32%),
-        radial-gradient(circle at 88% 0%, rgba(225, 29, 72, 0.10), transparent 28%),
-        var(--bg);
+      background: var(--bg);
       color: var(--ink);
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: "Inter", Arial, Helvetica, sans-serif;
     }
     main {
       width: min(1440px, 100vw);
@@ -62,9 +61,10 @@
       display: flex;
       gap: 6px;
       padding: 4px;
-      background: #e8eef3;
+      background: #ffffff;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
     }
     button, select, input {
       font: inherit;
@@ -83,9 +83,9 @@
       font-size: 13px;
     }
     .tabs button.active {
-      background: var(--panel);
-      color: var(--ink);
-      box-shadow: 0 1px 4px rgba(23, 33, 43, 0.16);
+      background: var(--rest);
+      color: #ffffff;
+      box-shadow: none;
     }
     .controls {
       display: grid;
@@ -95,7 +95,7 @@
       padding: 10px;
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 12px;
       box-shadow: var(--shadow);
     }
     .control {
@@ -125,7 +125,7 @@
       font-size: 12px;
     }
     .segmented button.active {
-      background: #18212f;
+      background: var(--rest);
       color: white;
     }
     select {
@@ -171,9 +171,9 @@
       font-size: 12px;
     }
     .chip.active {
-      background: #dcf7f4;
+      background: #f0fdfa;
       color: #0f766e;
-      border-color: #8bd8cf;
+      border-color: #99f6e4;
     }
     .legend {
       display: flex;
@@ -200,14 +200,14 @@
     .kpi, .card, .summary {
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 12px;
       box-shadow: var(--shadow);
     }
     .kpi {
       grid-column: span 3;
       min-height: 84px;
       padding: 11px 12px;
-      border-top: 4px solid var(--ink);
+      border-top: 4px solid var(--rest);
     }
     .kpi.good { border-top-color: var(--good); }
     .kpi.bad { border-top-color: var(--bad); }
@@ -370,15 +370,15 @@
 
   <script>
     const COLORS = {
-      rest: "#0f766e",
-      graphql: "#e11d48",
-      good: "#059669",
-      bad: "#d97706",
-      accent: "#0891b2",
-      ink: "#18212f",
-      muted: "#66768a",
-      line: "#d8e1ea",
-      soft: "#eef3f7"
+      rest: "#0d9488",
+      graphql: "#f97316",
+      good: "#10b981",
+      bad: "#f59e0b",
+      accent: "#0d9488",
+      ink: "#1e293b",
+      muted: "#64748b",
+      line: "#e2e8f0",
+      soft: "#f1f5f9"
     };
     const METRICS = ["response_time_ms", "response_size_bytes"];
     const METRIC_LABELS = {
@@ -528,8 +528,8 @@
     function diffColor(value) {
       const magnitude = Math.min(0.92, 0.22 + Math.abs(value) / 105);
       return value >= 0
-        ? `rgba(15, 138, 112, ${magnitude})`
-        : `rgba(180, 83, 9, ${magnitude})`;
+        ? `rgba(13, 148, 136, ${magnitude})`
+        : `rgba(249, 115, 22, ${magnitude})`;
     }
 
     function activeProcessed(metric = state.metric) {
@@ -576,7 +576,7 @@
       return {
         animationDuration: 450,
         color: [COLORS.rest, COLORS.graphql, COLORS.good, COLORS.bad],
-        textStyle: { fontFamily: "Arial, Helvetica, sans-serif", color: COLORS.ink },
+        textStyle: { fontFamily: "Inter, Arial, Helvetica, sans-serif", color: COLORS.ink },
         grid: { left: 54, right: 24, top: 36, bottom: 46, containLabel: true },
         tooltip: {
           trigger: "item",
@@ -1235,10 +1235,12 @@
         document.getElementById("status").textContent = "Biblioteca de graficos indisponivel.";
         return;
       }
+      const cacheKey = Date.now();
+      const loadCsv = path => fetch(`${path}?v=${cacheKey}`, { cache: "no-store" }).then(response => response.ok ? response.text() : "");
       const [rawText, processedText, statsText] = await Promise.all([
-        fetch("/data/raw_results.csv").then(response => response.ok ? response.text() : ""),
-        fetch("/data/processed_results.csv").then(response => response.ok ? response.text() : ""),
-        fetch("/data/statistical_results.csv").then(response => response.ok ? response.text() : "")
+        loadCsv("/data/raw_results.csv"),
+        loadCsv("/data/processed_results.csv"),
+        loadCsv("/data/statistical_results.csv")
       ]);
       if (!rawText || !processedText || !statsText) {
         document.getElementById("status").textContent = "Execute a coleta e a analise para gerar os CSVs.";
